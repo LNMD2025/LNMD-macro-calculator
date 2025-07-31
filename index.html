@@ -1,0 +1,515 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LNMD Macro Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6">LNMD Macro Calculator</h1>
+        <div class="space-y-4">
+            <div>
+                <label for="wakeTime" class="block text-sm font-medium text-gray-700">Wake Time (24-hour format)</label>
+                <select id="wakeTime" class="mt-1 block w-full p-2 border rounded-md" required>
+                    <option value="">Select hour</option>
+                </select>
+            </div>
+            <div>
+                <label for="sleepTime" class="block text-sm font-medium text-gray-700">Sleep Time (24-hour format)</label>
+                <select id="sleepTime" class="mt-1 block w-full p-2 border rounded-md" required>
+                    <option value="">Select hour</option>
+                </select>
+            </div>
+            <div>
+                <label for="weight" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                <input type="number" id="weight" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter your weight" required>
+            </div>
+            <div>
+                <label for="bodyFat" class="block text-sm font-medium text-gray-700">Body Fat Percentage (%)</label>
+                <input type="number" id="bodyFat" min="0" max="100" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter body fat %" required>
+            </div>
+            <div>
+                <label for="steps" class="block text-sm font-medium text-gray-700">Daily Steps (1000-10000)</label>
+                <input type="number" id="steps" min="1000" max="10000" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter daily steps" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Exercise Hours per Week (1-40)</label>
+                <div id="trainingTypes" class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <select class="trainingType w-2/3 p-2 border rounded-md">
+                            <option value="0">Select Training Type</option>
+                            <option value="3">Yoga/Pilates (MET: 3)</option>
+                            <option value="4.5">Weightlifting (MET: 4.5)</option>
+                            <option value="7">Cycling (MET: 7)</option>
+                            <option value="8">Swimming (MET: 8)</option>
+                            <option value="9">Running (MET: 9)</option>
+                            <option value="10">HIIT/Crossfit (MET: 10)</option>
+                        </select>
+                        <input type="number" class="trainingHours w-1/3 p-2 border rounded-md" min="0" max="40" placeholder="Hours" required>
+                    </div>
+                </div>
+                <button onclick="addTrainingType()" class="mt-2 text-blue-600 hover:underline">+ Add Another Training Type</button>
+            </div>
+            <div>
+                <label for="sessionsPerDay" class="block text-sm font-medium text-gray-700">Training Sessions per Day (1-3)</label>
+                <select id="sessionsPerDay" class="mt-1 block w-full p-2 border rounded-md" onchange="updateSessionTimes()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            <div id="sessionTimes" class="space-y-2">
+                <!-- Session time selectors will be added here dynamically -->
+            </div>
+            <div>
+                <label for="macroGoal" class="block text-sm font-medium text-gray-700">Macro Goal</label>
+                <select id="macroGoal" class="mt-1 block w-full p-2 border rounded-md">
+                    <option value="maintain">Maintain Weight</option>
+                    <option value="recomp">Body Recomposition</option>
+                    <option value="moderateCut">Moderate Weight Loss</option>
+                    <option value="aggressiveCut">Aggressive Weight Loss</option>
+                    <option value="aggressiveBulk">Aggressive Weight Gain</option>
+                    <option value="performance">Athletic Performance</option>
+                </select>
+            </div>
+            <div>
+                <label for="proteinLevel" class="block text-sm font-medium text-gray-700">Protein Level (per kg total weight)</label>
+                <select id="proteinLevel" class="mt-1 block w-full p-2 border rounded-md">
+                    <option value="0.8">Low (0.8g/kg)</option>
+                    <option value="1.5">Moderate (1.5g/kg)</option>
+                    <option value="2.2">High (2.2g/kg)</option>
+                </select>
+            </div>
+            <div>
+                <label for="fatLevel" class="block text-sm font-medium text-gray-700">Fat Level (per kg lean mass)</label>
+                <select id="fatLevel" class="mt-1 block w-full p-2 border rounded-md">
+                    <option value="0.8">Low (0.8g/kg)</option>
+                    <option value="1.4">Moderate (1.4g/kg)</option>
+                    <option value="2.0">High (2.0g/kg)</option>
+                </select>
+            </div>
+            <button onclick="calculateMacros()" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Calculate</button>
+        </div>
+        <div id="results" class="mt-6 hidden">
+            <h2 class="text-lg font-semibold">Your Daily Macros</h2>
+            <p id="calories" class="text-gray-700"></p>
+            <p id="protein" class="text-gray-700"></p>
+            <p id="carbs" class="text-gray-700"></p>
+            <p id="fats" class="text-gray-700"></p>
+            <h2 class="text-lg font-semibold mt-4">Calculation Breakdown</h2>
+            <p id="breakdown" class="text-gray-700"></p>
+            <h2 class="text-lg font-semibold mt-4">Macro Partitioning Timeline</h2>
+            <div id="partitioning" class="text-gray-700"></div>
+            <h2 class="text-lg font-semibold mt-4">Meal Planner (Beta)</h2>
+            <div id="mealPlanner" class="text-gray-700"></div>
+        </div>
+    </div>
+
+    <script>
+        function populateHourDropdown(selectElement) {
+            for (let i = 0; i < 24; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i.toString().padStart(2, '0')}:00`;
+                selectElement.appendChild(option);
+            }
+        }
+
+        const wakeSelect = document.getElementById('wakeTime');
+        const sleepSelect = document.getElementById('sleepTime');
+        populateHourDropdown(wakeSelect);
+        populateHourDropdown(sleepSelect);
+
+        function addTrainingType() {
+            const container = document.getElementById('trainingTypes');
+            const newTrainingDiv = document.createElement('div');
+            newTrainingDiv.classList.add('flex', 'items-center', 'space-x-2');
+            newTrainingDiv.innerHTML = `
+                <select class="trainingType w-2/3 p-2 border rounded-md">
+                    <option value="0">Select Training Type</option>
+                    <option value="3">Yoga/Pilates (MET: 3)</option>
+                    <option value="4.5">Weightlifting (MET: 4.5)</option>
+                    <option value="7">Cycling (MET: 7)</option>
+                    <option value="8">Swimming (MET: 8)</option>
+                    <option value="9">Running (MET: 9)</option>
+                    <option value="10">HIIT/Crossfit (MET: 10)</option>
+                </select>
+                <input type="number" class="trainingHours w-1/3 p-2 border rounded-md" min="0" max="40" placeholder="Hours" required>
+            `;
+            container.appendChild(newTrainingDiv);
+        }
+
+        function updateSessionTimes() {
+            const sessions = parseInt(document.getElementById('sessionsPerDay').value) || 1;
+            const container = document.getElementById('sessionTimes');
+            container.innerHTML = '';
+            for (let i = 1; i <= sessions; i++) {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label for="sessionTime${i}" class="block text-sm font-medium text-gray-700">Session ${i} Start Hour (24-hour format)</label>
+                    <select id="sessionTime${i}" class="mt-1 block w-full p-2 border rounded-md" required>
+                        <option value="">Select hour</option>
+                    </select>
+                `;
+                container.appendChild(div);
+                populateHourDropdown(document.getElementById(`sessionTime${i}`));
+            }
+        }
+
+        // Initialize with 1 session
+        updateSessionTimes();
+
+        function formatTime(hour) {
+            const ampm = hour >= 12 ? 'pm' : 'am';
+            const h = hour % 12 || 12;
+            return h + ampm;
+        }
+
+        function calculateMacros() {
+            console.log('Calculate button clicked');
+            try {
+                const wakeTime = parseInt(document.getElementById('wakeTime').value) || 6;
+                const sleepTime = parseInt(document.getElementById('sleepTime').value) || 22;
+                const weight = parseFloat(document.getElementById('weight').value) || 70;
+                const bodyFat = parseFloat(document.getElementById('bodyFat').value) || 20;
+                const steps = parseFloat(document.getElementById('steps').value) || 5000;
+                const macroGoal = document.getElementById('macroGoal').value || 'maintain';
+                const proteinPerKg = parseFloat(document.getElementById('proteinLevel').value) || 1.5;
+                const fatPerKg = parseFloat(document.getElementById('fatLevel').value) || 1.4;
+                const sessionsPerDay = parseInt(document.getElementById('sessionsPerDay').value) || 1;
+
+                console.log('Inputs parsed:', { wakeTime, sleepTime, weight, bodyFat, steps, macroGoal, proteinPerKg, fatPerKg, sessionsPerDay });
+
+                // Collect session times with default
+                const sessionTimes = [];
+                for (let i = 1; i <= sessionsPerDay; i++) {
+                    const sessionTime = parseInt(document.getElementById(`sessionTime${i}`).value) || 8 + (i - 1) * 4; // Default spaced
+                    sessionTimes.push(sessionTime);
+                }
+                console.log('Session times:', sessionTimes);
+
+                // Validation with specific alerts
+                const errors = [];
+                if (isNaN(wakeTime)) errors.push('Select wake time.');
+                if (isNaN(sleepTime)) errors.push('Select sleep time.');
+                if (weight <= 0) errors.push('Enter valid weight.');
+                if (bodyFat < 0 || bodyFat > 100) errors.push('Body fat % between 0-100.');
+                if (steps < 1000 || steps > 10000) errors.push('Steps between 1000-10000.');
+
+                if (errors.length > 0) {
+                    console.log('Validation errors:', errors);
+                    alert('Please fix: ' + errors.join(' '));
+                    return;
+                }
+                console.log('Validation passed');
+
+                // Calculate lean body mass
+                const leanBodyMass = weight * (1 - bodyFat / 100);
+                console.log('LBM:', leanBodyMass);
+
+                // Collect training data
+                const trainingTypes = document.querySelectorAll('.trainingType');
+                const trainingHours = document.querySelectorAll('.trainingHours');
+                let totalHours = 0;
+                const trainingData = [];
+                for (let i = 0; i < trainingTypes.length; i++) {
+                    const met = parseFloat(trainingTypes[i].value) || 0;
+                    const hours = parseFloat(trainingHours[i].value) || 0;
+                    if (met > 0 && hours > 0) {
+                        trainingData.push({ met, hours });
+                        totalHours += hours;
+                    }
+                }
+
+                if (totalHours < 1 || totalHours > 40) {
+                    console.log('Training hours invalid:', totalHours);
+                    alert('Total exercise hours must be between 1 and 40.');
+                    return;
+                }
+                console.log('Training data:', trainingData);
+
+                // Calculate BMR (Katch-McArdle)
+                const bmr = 370 + 21.6 * leanBodyMass;
+                console.log('BMR:', bmr);
+
+                // Base TDEE
+                const baseTdee = bmr * 1.2;
+                console.log('Base TDEE:', baseTdee);
+
+                // Calories from steps
+                const metSteps = 3.5;
+                const stepsPerHour = 6000;
+                const stepsCal = metSteps * weight * (steps / stepsPerHour);
+                console.log('Steps calories:', stepsCal);
+
+                // Calories from exercise
+                let exerciseCalPerDay = 0;
+                for (const { met, hours } of trainingData) {
+                    exerciseCalPerDay += met * weight * (hours / 7);
+                }
+                console.log('Exercise calories per day:', exerciseCalPerDay);
+
+                // TDEE
+                const tdee = baseTdee + stepsCal + exerciseCalPerDay;
+                console.log('TDEE:', tdee);
+
+                // Calorie adjustment
+                let calories;
+                let deficitSurplus;
+                switch (macroGoal) {
+                    case 'aggressiveCut':
+                        calories = tdee * 0.7;
+                        deficitSurplus = '30% deficit';
+                        break;
+                    case 'moderateCut':
+                        calories = tdee * 0.85;
+                        deficitSurplus = '15% deficit';
+                        break;
+                    case 'recomp':
+                        calories = tdee * 0.95;
+                        deficitSurplus = '5% deficit';
+                        break;
+                    case 'aggressiveBulk':
+                        calories = tdee * 1.2;
+                        deficitSurplus = '20% surplus';
+                        break;
+                    case 'performance':
+                        calories = tdee * 1.1;
+                        deficitSurplus = '10% surplus';
+                        break;
+                    default:
+                        calories = tdee;
+                        deficitSurplus = 'maintenance';
+                }
+                console.log('Adjusted calories:', calories);
+
+                // Macros
+                const proteinGrams = Math.round(weight * proteinPerKg);
+                const proteinCalories = proteinGrams * 4;
+                const fatGrams = Math.round(leanBodyMass * fatPerKg);
+                const fatCalories = fatGrams * 9;
+                const carbCalories = calories - (proteinCalories + fatCalories);
+                const carbGrams = Math.round(carbCalories / 4);
+                console.log('Macros:', { proteinGrams, fatGrams, carbGrams });
+
+                if (carbGrams < 0) {
+                    alert('Warning: Carbohydrate grams are negative. Consider lowering protein or fat levels, or increasing exercise hours/steps for more calories.');
+                }
+
+                // Populate daily macros
+                document.getElementById('calories').textContent = `Calories: ${Math.round(calories)} kcal`;
+                document.getElementById('protein').textContent = `Protein: ${proteinGrams}g`;
+                document.getElementById('carbs').textContent = `Carbohydrates: ${carbGrams}g`;
+                document.getElementById('fats').textContent = `Fats: ${fatGrams}g`;
+                console.log('Daily macros populated');
+
+                // Breakdown
+                const breakdown = `
+Lean Body Mass: ${Math.round(leanBodyMass)} kg<br>
+BMR (Katch-McArdle): ${Math.round(bmr)} kcal<br>
+Base TDEE (sedentary): ${Math.round(baseTdee)} kcal<br>
+Calories from steps: ${Math.round(stepsCal)} kcal<br>
+Calories from exercise: ${Math.round(exerciseCalPerDay)} kcal<br>
+Total TDEE: ${Math.round(tdee)} kcal<br>
+Calorie adjustment (${deficitSurplus}): ${Math.round(calories)} kcal<br>
+Protein (${proteinPerKg}g/kg total weight): ${proteinGrams}g (${proteinCalories} kcal)<br>
+Fats (${fatPerKg}g/kg lean mass): ${fatGrams}g (${fatCalories} kcal)<br>
+Carbs (remaining): ${carbGrams}g (${Math.round(carbCalories)} kcal)
+                `;
+                document.getElementById('breakdown').innerHTML = breakdown;
+                console.log('Breakdown populated');
+
+                // Partitioning timeline
+                try {
+                    console.log('Starting partitioning');
+                    const partitioningDiv = document.getElementById('partitioning');
+                    partitioningDiv.innerHTML = '';
+
+                    // Total workout fractions based on goal
+                    let totalWorkoutCarb = 0.5;
+                    let totalWorkoutProtein = 0.5;
+                    let totalWorkoutFat = 0.3;
+
+                    if (macroGoal === 'performance' || macroGoal === 'aggressiveBulk') {
+                        totalWorkoutCarb = 0.7;
+                        totalWorkoutProtein = 0.4;
+                        totalWorkoutFat = 0.2;
+                    } else if (macroGoal === 'aggressiveCut' || macroGoal === 'recomp') {
+                        totalWorkoutCarb = 0.4;
+                        totalWorkoutProtein = 0.6;
+                        totalWorkoutFat = 0.4;
+                    }
+                    console.log('Workout fractions:', { totalWorkoutCarb, totalWorkoutProtein, totalWorkoutFat });
+
+                    // Per session fractions
+                    const perSessionCarb = totalWorkoutCarb / sessionsPerDay;
+                    const perSessionProtein = totalWorkoutProtein / sessionsPerDay;
+                    const perSessionFat = totalWorkoutFat / sessionsPerDay;
+                    console.log('Per session:', { perSessionCarb, perSessionProtein, perSessionFat });
+
+                    // Within session distribution
+                    const carbPrePct = 0.3, carbIntraPct = 0.3, carbPostPct = 0.4;
+                    const proteinPrePct = 0.3, proteinIntraPct = 0.2, proteinPostPct = 0.5;
+                    const fatPrePct = 0.4, fatIntraPct = 0.2, fatPostPct = 0.4;
+
+                    // Remaining for other meals
+                    const numOtherMeals = 3;
+                    const remainingCarb = 1 - totalWorkoutCarb;
+                    const remainingProtein = 1 - totalWorkoutProtein;
+                    const remainingFat = 1 - totalWorkoutFat;
+                    const carbOther = remainingCarb / numOtherMeals;
+                    const proteinOther = remainingProtein / numOtherMeals;
+                    const fatOther = remainingFat / numOtherMeals;
+                    console.log('Remaining for other meals:', { remainingCarb, remainingProtein, remainingFat });
+
+                    // Events
+                    const events = [];
+                    sessionTimes.forEach((startHour, index) => {
+                        const sessionNum = index + 1;
+
+                        events.push({
+                            hour: (startHour - 1 + 24) % 24,
+                            label: `${formatTime(startHour - 1)} - Pre-workout (Session ${sessionNum})`,
+                            type: 'pre'
+                        });
+
+                        events.push({
+                            hour: startHour,
+                            label: `${formatTime(startHour)} - Intra-workout (Session ${sessionNum})`,
+                            type: 'intra'
+                        });
+
+                        events.push({
+                            hour: (startHour + 1) % 24,
+                            label: `${formatTime(startHour + 1)} - Post-workout (Session ${sessionNum})`,
+                            type: 'post'
+                        });
+                    });
+                    console.log('Events generated:', events);
+
+                    // Sort events by hour
+                    events.sort((a, b) => a.hour - b.hour);
+
+                    // Assign macros
+                    events.forEach(event => {
+                        let pFrac, cFrac, fFrac;
+                        if (event.type === 'pre') {
+                            pFrac = perSessionProtein * proteinPrePct;
+                            cFrac = perSessionCarb * carbPrePct;
+                            fFrac = perSessionFat * fatPrePct;
+                        } else if (event.type === 'intra') {
+                            pFrac = perSessionProtein * proteinIntraPct;
+                            cFrac = perSessionCarb * carbIntraPct;
+                            fFrac = perSessionFat * fatIntraPct;
+                        } else {
+                            pFrac = perSessionProtein * proteinPostPct;
+                            cFrac = perSessionCarb * carbPostPct;
+                            fFrac = perSessionFat * fatPostPct;
+                        }
+                        event.protein = Math.round(proteinGrams * pFrac);
+                        event.carbs = Math.round(carbGrams * cFrac);
+                        event.fats = Math.round(fatGrams * fFrac);
+                    });
+                    console.log('Events with macros:', events);
+
+                    // Generate HTML for partitioning
+                    let html = '<ul class="list-none space-y-2">';
+                    if (events.length === 0) {
+                        html += '<li class="p-2 bg-gray-50 rounded-md">No partitioning data—ensure sessions and times are selected.</li>';
+                    } else {
+                        events.forEach(event => {
+                            html += `<li class="p-2 bg-gray-50 rounded-md"><strong>${event.label}:</strong> Protein ${event.protein}g, Carbs ${event.carbs}g, Fats ${event.fats}g</li>`;
+                        });
+                    }
+
+                    // Other meals
+                    const otherProtein = Math.round(proteinGrams * proteinOther);
+                    const otherCarbs = Math.round(carbGrams * carbOther);
+                    const otherFats = Math.round(fatGrams * fatOther);
+
+                    // Add other meals timeline
+                    const activeHours = sleepTime > wakeTime ? sleepTime - wakeTime : sleepTime - wakeTime + 24;
+                    const mealIntervals = activeHours / (numOtherMeals + 1);
+                    const otherMealTimes = [];
+                    let currentTime = wakeTime;
+                    for (let i = 0; i < numOtherMeals; i++) {
+                        currentTime += mealIntervals;
+                        let mealHour = Math.floor(currentTime) % 24;
+                        // Avoid overlap
+                        while (events.some(e => e.hour === mealHour)) {
+                            currentTime += 1;
+                            mealHour = Math.floor(currentTime) % 24;
+                        }
+                        otherMealTimes.push(mealHour);
+                    }
+
+                    otherMealTimes.sort((a, b) => a - b);
+                    otherMealTimes.forEach((hour, index) => {
+                        html += `<li class="p-2 bg-gray-50 rounded-md"><strong>${formatTime(hour)} - Other Meal ${index + 1}:</strong> Protein ${otherProtein}g, Carbs ${otherCarbs}g, Fats ${otherFats}g</li>`;
+                    });
+                    html += '</ul>';
+                    console.log('Generated HTML:', html);
+
+                    partitioningDiv.innerHTML = html || '<p>No partitioning data generated—check console for issues.</p>';
+                    console.log('Partitioning populated');
+                } catch (partError) {
+                    console.error('Error in partitioning:', partError);
+                    partitioningDiv.innerHTML = '<p>Error generating timeline—check console.</p>';
+                }
+
+                // Meal planner
+                document.getElementById('mealPlanner').innerHTML = '<p>Suggested Meal: Breakfast - Oatmeal (Carbs 30g, Protein 10g, Fats 5g)<br>Lunch - Chicken Salad (Protein 40g, Carbs 20g, Fats 15g)<br>Dinner - Salmon with Veggies (Protein 30g, Carbs 25g, Fats 20g)</p><p>Customize with allergies/filters in future updates.</p>';
+                console.log('Meal planner populated');
+
+                // Show results
+                document.getElementById('results').classList.remove('hidden');
+                console.log('Results displayed');
+            } catch (error) {
+                console.error('Error in calculateMacros:', error);
+                alert('An error occurred. Check console for details.');
+            }
+        }
+    </script>
+</body>
+</html>
