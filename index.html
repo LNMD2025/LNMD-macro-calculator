@@ -1,514 +1,843 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LNMD Macro Calculator</title>
+    <title>TrendSpotter - Hospitality Content Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Track trending reels, posts, and TikToks in the hospitality industry - cafes, restaurants, pizza shops, and more.">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#f59e0b',
+                        dark: '#1e1b4b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15); }
+        .platform-badge { backdrop-filter: blur(10px); }
+        .stat-glow { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-center mb-6">LNMD Macro Calculator</h1>
-        <div class="space-y-4">
-            <div>
-                <label for="wakeTime" class="block text-sm font-medium text-gray-700">Wake Time (24-hour format)</label>
-                <select id="wakeTime" class="mt-1 block w-full p-2 border rounded-md" required>
-                    <option value="">Select hour</option>
-                </select>
-            </div>
-            <div>
-                <label for="sleepTime" class="block text-sm font-medium text-gray-700">Sleep Time (24-hour format)</label>
-                <select id="sleepTime" class="mt-1 block w-full p-2 border rounded-md" required>
-                    <option value="">Select hour</option>
-                </select>
-            </div>
-            <div>
-                <label for="weight" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
-                <input type="number" id="weight" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter your weight" required>
-            </div>
-            <div>
-                <label for="bodyFat" class="block text-sm font-medium text-gray-700">Body Fat Percentage (%)</label>
-                <input type="number" id="bodyFat" min="0" max="100" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter body fat %" required>
-            </div>
-            <div>
-                <label for="steps" class="block text-sm font-medium text-gray-700">Daily Steps (1000-10000)</label>
-                <input type="number" id="steps" min="1000" max="10000" class="mt-1 block w-full p-2 border rounded-md" placeholder="Enter daily steps" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Exercise Hours per Week (1-40)</label>
-                <div id="trainingTypes" class="space-y-2">
-                    <div class="flex items-center space-x-2">
-                        <select class="trainingType w-2/3 p-2 border rounded-md">
-                            <option value="0">Select Training Type</option>
-                            <option value="3">Yoga/Pilates (MET: 3)</option>
-                            <option value="4.5">Weightlifting (MET: 4.5)</option>
-                            <option value="7">Cycling (MET: 7)</option>
-                            <option value="8">Swimming (MET: 8)</option>
-                            <option value="9">Running (MET: 9)</option>
-                            <option value="10">HIIT/Crossfit (MET: 10)</option>
-                        </select>
-                        <input type="number" class="trainingHours w-1/3 p-2 border rounded-md" min="0" max="40" placeholder="Hours" required>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-fire text-2xl text-amber-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">TrendSpotter</h1>
+                        <p class="text-xs text-indigo-200">Hospitality Content Tracker</p>
                     </div>
                 </div>
-                <button onclick="addTrainingType()" class="mt-2 text-blue-600 hover:underline">+ Add Another Training Type</button>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center bg-white/10 rounded-lg px-3 py-2">
+                        <span class="pulse-dot w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                        <span class="text-sm">Live Tracking</span>
+                    </div>
+                    <button onclick="exportReport()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                    <button onclick="toggleBookmarks()" class="relative bg-white/20 hover:bg-white/30 p-2 rounded-lg transition">
+                        <i class="fas fa-bookmark text-lg"></i>
+                        <span id="bookmarkCount" class="absolute -top-1 -right-1 bg-amber-400 text-dark text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+                    </button>
+                </div>
             </div>
-            <div>
-                <label for="sessionsPerDay" class="block text-sm font-medium text-gray-700">Training Sessions per Day (1-3)</label>
-                <select id="sessionsPerDay" class="mt-1 block w-full p-2 border rounded-md" onchange="updateSessionTimes()">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                </select>
-            </div>
-            <div id="sessionTimes" class="space-y-2">
-                <!-- Session time selectors will be added here dynamically -->
-            </div>
-            <div>
-                <label for="macroGoal" class="block text-sm font-medium text-gray-700">Macro Goal</label>
-                <select id="macroGoal" class="mt-1 block w-full p-2 border rounded-md">
-                    <option value="maintain">Maintain Weight</option>
-                    <option value="recomp">Body Recomposition</option>
-                    <option value="moderateCut">Moderate Weight Loss</option>
-                    <option value="aggressiveCut">Aggressive Weight Loss</option>
-                    <option value="aggressiveBulk">Aggressive Weight Gain</option>
-                    <option value="performance">Athletic Performance</option>
-                </select>
-            </div>
-            <div>
-                <label for="proteinLevel" class="block text-sm font-medium text-gray-700">Protein Level (per kg total weight)</label>
-                <select id="proteinLevel" class="mt-1 block w-full p-2 border rounded-md">
-                    <option value="0.8">Low (0.8g/kg)</option>
-                    <option value="1.5">Moderate (1.5g/kg)</option>
-                    <option value="2.2">High (2.2g/kg)</option>
-                </select>
-            </div>
-            <div>
-                <label for="fatLevel" class="block text-sm font-medium text-gray-700">Fat Level (per kg lean mass)</label>
-                <select id="fatLevel" class="mt-1 block w-full p-2 border rounded-md">
-                    <option value="0.8">Low (0.8g/kg)</option>
-                    <option value="1.4">Moderate (1.4g/kg)</option>
-                    <option value="2.0">High (2.0g/kg)</option>
-                </select>
-            </div>
-            <button onclick="calculateMacros()" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Calculate</button>
         </div>
-        <div id="results" class="mt-6 hidden">
-            <h2 class="text-lg font-semibold">Your Daily Macros</h2>
-            <p id="calories" class="text-gray-700"></p>
-            <p id="protein" class="text-gray-700"></p>
-            <p id="carbs" class="text-gray-700"></p>
-            <p id="fats" class="text-gray-700"></p>
-            <h2 class="text-lg font-semibold mt-4">Calculation Breakdown</h2>
-            <p id="breakdown" class="text-gray-700"></p>
-            <h2 class="text-lg font-semibold mt-4">Macro Partitioning Timeline</h2>
-            <div id="partitioning" class="text-gray-700"></div>
-            <h2 class="text-lg font-semibold mt-4">Meal Planner (Beta)</h2>
-            <div id="mealPlanner" class="text-gray-700"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Stats Overview -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-2xl p-4 shadow-sm stat-glow">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-500 text-sm">Trending Posts</span>
+                    <i class="fas fa-chart-line text-primary"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800" id="totalTrending">247</p>
+                <p class="text-xs text-green-500"><i class="fas fa-arrow-up mr-1"></i>12% from yesterday</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-500 text-sm">Avg. Engagement</span>
+                    <i class="fas fa-heart text-pink-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800">8.4%</p>
+                <p class="text-xs text-green-500"><i class="fas fa-arrow-up mr-1"></i>2.1% increase</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-500 text-sm">Top Niche</span>
+                    <i class="fas fa-crown text-amber-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800">Coffee</p>
+                <p class="text-xs text-gray-500">42% of content</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-500 text-sm">Best Time</span>
+                    <i class="fas fa-clock text-blue-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800">6-9 PM</p>
+                <p class="text-xs text-gray-500">Peak engagement</p>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm mb-6">
+            <div class="flex flex-wrap gap-3 items-center">
+                <span class="text-sm font-semibold text-gray-700">Platforms:</span>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFilter('platform', 'all')" class="filter-btn platform-filter active px-4 py-2 rounded-full text-sm font-medium bg-primary text-white" data-filter="all">
+                        All
+                    </button>
+                    <button onclick="toggleFilter('platform', 'instagram')" class="filter-btn platform-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-pink-100" data-filter="instagram">
+                        <i class="fab fa-instagram mr-1"></i>Reels
+                    </button>
+                    <button onclick="toggleFilter('platform', 'tiktok')" class="filter-btn platform-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="tiktok">
+                        <i class="fab fa-tiktok mr-1"></i>TikTok
+                    </button>
+                    <button onclick="toggleFilter('platform', 'facebook')" class="filter-btn platform-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-100" data-filter="facebook">
+                        <i class="fab fa-facebook mr-1"></i>Facebook
+                    </button>
+                    <button onclick="toggleFilter('platform', 'youtube')" class="filter-btn platform-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-red-100" data-filter="youtube">
+                        <i class="fab fa-youtube mr-1"></i>Shorts
+                    </button>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 items-center mt-4">
+                <span class="text-sm font-semibold text-gray-700">Categories:</span>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFilter('category', 'all')" class="filter-btn category-filter active px-4 py-2 rounded-full text-sm font-medium bg-primary text-white" data-filter="all">
+                        All
+                    </button>
+                    <button onclick="toggleFilter('category', 'cafe')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-amber-100" data-filter="cafe">
+                        <i class="fas fa-coffee mr-1"></i>Cafe
+                    </button>
+                    <button onclick="toggleFilter('category', 'pizza')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-orange-100" data-filter="pizza">
+                        <i class="fas fa-pizza-slice mr-1"></i>Pizza
+                    </button>
+                    <button onclick="toggleFilter('category', 'restaurant')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-green-100" data-filter="restaurant">
+                        <i class="fas fa-utensils mr-1"></i>Restaurant
+                    </button>
+                    <button onclick="toggleFilter('category', 'bar')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-purple-100" data-filter="bar">
+                        <i class="fas fa-cocktail mr-1"></i>Bar
+                    </button>
+                    <button onclick="toggleFilter('category', 'bakery')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-pink-100" data-filter="bakery">
+                        <i class="fas fa-cookie mr-1"></i>Bakery
+                    </button>
+                    <button onclick="toggleFilter('category', 'foodtruck')" class="filter-btn category-filter px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-yellow-100" data-filter="foodtruck">
+                        <i class="fas fa-truck mr-1"></i>Food Truck
+                    </button>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 items-center mt-4">
+                <span class="text-sm font-semibold text-gray-700">Sort by:</span>
+                <select id="sortBy" onchange="sortContent()" class="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="engagement">Highest Engagement</option>
+                    <option value="views">Most Views</option>
+                    <option value="recent">Most Recent</option>
+                    <option value="growth">Fastest Growing</option>
+                </select>
+                <span class="text-sm font-semibold text-gray-700 ml-4">Time:</span>
+                <select id="timeRange" onchange="filterByTime()" class="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d" selected>Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                    <option value="90d">Last 90 Days</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Trending Hashtags -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-gray-800"><i class="fas fa-hashtag mr-2 text-primary"></i>Trending Hashtags</h2>
+                <span class="text-xs text-gray-500">Updated 5 min ago</span>
+            </div>
+            <div class="flex flex-wrap gap-2" id="hashtagContainer">
+                <!-- Hashtags populated by JS -->
+            </div>
+        </section>
+
+        <!-- Content Grid -->
+        <section class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-gray-800 text-lg"><i class="fas fa-fire-alt mr-2 text-orange-500"></i>Trending Content</h2>
+                <span class="text-sm text-gray-500" id="contentCount">Showing 12 results</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="contentGrid">
+                <!-- Content cards populated by JS -->
+            </div>
+        </section>
+
+        <!-- Load More -->
+        <div class="text-center mb-8">
+            <button onclick="loadMore()" class="bg-primary hover:bg-secondary text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-primary/30">
+                <i class="fas fa-plus mr-2"></i>Load More Content
+            </button>
+        </div>
+
+        <!-- Content Ideas Section -->
+        <section class="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white mb-6">
+            <h2 class="font-bold text-xl mb-4"><i class="fas fa-lightbulb mr-2"></i>Content Ideas Based on Trends</h2>
+            <div class="grid md:grid-cols-3 gap-4" id="ideasGrid">
+                <!-- Ideas populated by JS -->
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+            <h2 class="font-semibold text-gray-800 text-lg mb-4"><i class="fas fa-chart-bar mr-2 text-primary"></i>Performance Analytics</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-3">Best Posting Times</h3>
+                    <div class="space-y-2" id="postingTimes">
+                        <!-- Posting times populated by JS -->
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-3">Content Format Performance</h3>
+                    <div class="space-y-2" id="formatPerformance">
+                        <!-- Format performance populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bookmarks Sidebar -->
+    <div id="bookmarksSidebar" class="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform z-50">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-gray-800"><i class="fas fa-bookmark mr-2 text-primary"></i>Saved Content</h3>
+                <button onclick="toggleBookmarks()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 overflow-y-auto h-full pb-20" id="bookmarksList">
+            <p class="text-gray-500 text-sm text-center py-8">No saved content yet.<br>Click the bookmark icon on any post to save it.</p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
+            <button onclick="exportBookmarks()" class="w-full bg-primary text-white py-2 rounded-lg font-medium">
+                <i class="fas fa-download mr-2"></i>Export Saved Content
+            </button>
         </div>
     </div>
 
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleBookmarks()"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all z-50">
+        <span id="toastMessage">Content saved!</span>
+    </div>
+
     <script>
-        function populateHourDropdown(selectElement) {
-            for (let i = 0; i < 24; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = `${i.toString().padStart(2, '0')}:00`;
-                selectElement.appendChild(option);
+        // Sample trending content data
+        const trendingContent = [
+            {
+                id: 1,
+                platform: 'instagram',
+                category: 'cafe',
+                title: 'Satisfying latte art pour - rosetta technique',
+                creator: '@artisan_coffee_co',
+                thumbnail: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=400&fit=crop',
+                views: 2400000,
+                likes: 342000,
+                comments: 4200,
+                shares: 28000,
+                engagement: 15.6,
+                growth: 234,
+                posted: '2 days ago',
+                hashtags: ['#latteart', '#coffeelover', '#barista', '#cafevibes'],
+                description: 'Watch this mesmerizing rosetta pour that took 3 years to master'
+            },
+            {
+                id: 2,
+                platform: 'tiktok',
+                category: 'pizza',
+                title: 'POV: You work at a busy pizza shop on Friday night',
+                creator: '@pizza_life_nyc',
+                thumbnail: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=400&fit=crop',
+                views: 5800000,
+                likes: 890000,
+                comments: 12000,
+                shares: 67000,
+                engagement: 16.7,
+                growth: 456,
+                posted: '1 day ago',
+                hashtags: ['#pizzatok', '#pizzamaker', '#foodtok', '#restaurantlife'],
+                description: 'The chaos, the speed, the dough flying everywhere'
+            },
+            {
+                id: 3,
+                platform: 'instagram',
+                category: 'restaurant',
+                title: 'Behind the scenes: Plating our signature dish',
+                creator: '@finedining_secrets',
+                thumbnail: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=400&fit=crop',
+                views: 1200000,
+                likes: 198000,
+                comments: 3100,
+                shares: 15000,
+                engagement: 18.0,
+                growth: 189,
+                posted: '3 days ago',
+                hashtags: ['#chefslife', '#plating', '#finedining', '#culinaryart'],
+                description: 'Every detail matters in fine dining presentation'
+            },
+            {
+                id: 4,
+                platform: 'tiktok',
+                category: 'cafe',
+                title: 'This cafe hack saves us 2 hours every morning',
+                creator: '@cafe_owner_tips',
+                thumbnail: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=400&fit=crop',
+                views: 3200000,
+                likes: 456000,
+                comments: 8900,
+                shares: 45000,
+                engagement: 15.9,
+                growth: 312,
+                posted: '12 hours ago',
+                hashtags: ['#cafetips', '#smallbusiness', '#coffeeshop', '#entrepreneurlife'],
+                description: 'Batch prepping syrups and organizing stations efficiently'
+            },
+            {
+                id: 5,
+                platform: 'facebook',
+                category: 'bakery',
+                title: 'From dough to croissant: 72-hour process',
+                creator: 'Le Petit Bakery',
+                thumbnail: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=400&fit=crop',
+                views: 890000,
+                likes: 124000,
+                comments: 2300,
+                shares: 18000,
+                engagement: 16.2,
+                growth: 145,
+                posted: '4 days ago',
+                hashtags: ['#croissant', '#bakerylife', '#pastry', '#frenchbaking'],
+                description: 'The lamination process that creates those perfect layers'
+            },
+            {
+                id: 6,
+                platform: 'youtube',
+                category: 'bar',
+                title: 'Cocktail that changes color when you add ice',
+                creator: '@mixology_masters',
+                thumbnail: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=400&fit=crop',
+                views: 4500000,
+                likes: 567000,
+                comments: 9800,
+                shares: 89000,
+                engagement: 14.8,
+                growth: 523,
+                posted: '5 days ago',
+                hashtags: ['#cocktails', '#bartender', '#mixology', '#barlife'],
+                description: 'Butterfly pea flower magic meets citrus'
+            },
+            {
+                id: 7,
+                platform: 'tiktok',
+                category: 'foodtruck',
+                title: 'Day in the life: Food truck owner at 4AM',
+                creator: '@tacos_on_wheels',
+                thumbnail: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=400&h=400&fit=crop',
+                views: 2100000,
+                likes: 312000,
+                comments: 5600,
+                shares: 34000,
+                engagement: 16.7,
+                growth: 278,
+                posted: '2 days ago',
+                hashtags: ['#foodtruck', '#smallbusiness', '#entrepreneur', '#streetfood'],
+                description: 'The grind behind running a successful mobile kitchen'
+            },
+            {
+                id: 8,
+                platform: 'instagram',
+                category: 'cafe',
+                title: 'Our most viral drink: Lavender Cloud Latte',
+                creator: '@aesthetic_cafe',
+                thumbnail: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop',
+                views: 1800000,
+                likes: 289000,
+                comments: 4500,
+                shares: 23000,
+                engagement: 17.6,
+                growth: 198,
+                posted: '1 day ago',
+                hashtags: ['#lavenderatte', '#cafetok', '#aesthetic', '#specialtydrinks'],
+                description: 'Recipe + behind the scenes of creating this viral menu item'
+            },
+            {
+                id: 9,
+                platform: 'tiktok',
+                category: 'pizza',
+                title: 'Reacting to our 1-star reviews (plot twist ending)',
+                creator: '@honest_pizzeria',
+                thumbnail: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=400&fit=crop',
+                views: 7200000,
+                likes: 1200000,
+                comments: 34000,
+                shares: 156000,
+                engagement: 19.3,
+                growth: 678,
+                posted: '6 hours ago',
+                hashtags: ['#restaurantowner', '#badreviews', '#pizzatok', '#smallbusiness'],
+                description: 'Sometimes the worst reviews teach us the most'
+            },
+            {
+                id: 10,
+                platform: 'facebook',
+                category: 'restaurant',
+                title: 'Customer proposed at our restaurant - our reaction',
+                creator: 'Bella Italia Restaurant',
+                thumbnail: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop',
+                views: 3400000,
+                likes: 478000,
+                comments: 8900,
+                shares: 67000,
+                engagement: 16.3,
+                growth: 345,
+                posted: '3 days ago',
+                hashtags: ['#proposal', '#restaurantmoments', '#love', '#finedining'],
+                description: 'We helped set up the surprise and caught it all on camera'
+            },
+            {
+                id: 11,
+                platform: 'youtube',
+                category: 'bakery',
+                title: 'Cake decorating fails vs reality at our bakery',
+                creator: '@bakery_bloopers',
+                thumbnail: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop',
+                views: 2800000,
+                likes: 398000,
+                comments: 6700,
+                shares: 45000,
+                engagement: 16.0,
+                growth: 234,
+                posted: '4 days ago',
+                hashtags: ['#cakedecorating', '#bakingfails', '#bakerylife', '#dessert'],
+                description: 'Not every cake is Instagram-worthy (and thats okay)'
+            },
+            {
+                id: 12,
+                platform: 'instagram',
+                category: 'bar',
+                title: 'Speed bartending challenge: 10 cocktails in 2 minutes',
+                creator: '@flair_bartending',
+                thumbnail: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=400&h=400&fit=crop',
+                views: 1500000,
+                likes: 234000,
+                comments: 3400,
+                shares: 19000,
+                engagement: 17.1,
+                growth: 189,
+                posted: '2 days ago',
+                hashtags: ['#bartending', '#speedchallenge', '#cocktails', '#nightlife'],
+                description: 'When Saturday night hits and the orders keep coming'
             }
+        ];
+
+        // Trending hashtags data
+        const trendingHashtags = [
+            { tag: '#coffeelover', posts: '2.4M', growth: 23 },
+            { tag: '#restaurantlife', posts: '1.8M', growth: 18 },
+            { tag: '#foodtok', posts: '5.2M', growth: 45 },
+            { tag: '#smallbusiness', posts: '3.1M', growth: 32 },
+            { tag: '#barista', posts: '1.2M', growth: 15 },
+            { tag: '#pizzatok', posts: '890K', growth: 67 },
+            { tag: '#cafevibes', posts: '670K', growth: 28 },
+            { tag: '#chefslife', posts: '1.5M', growth: 21 },
+            { tag: '#cocktails', posts: '2.1M', growth: 19 },
+            { tag: '#bakerylife', posts: '450K', growth: 34 }
+        ];
+
+        // Content ideas
+        const contentIdeas = [
+            { icon: 'fa-clock', title: 'Behind-the-Scenes', desc: 'Show your morning prep routine - these get 3x more engagement' },
+            { icon: 'fa-comments', title: 'Review Reactions', desc: 'React to your reviews (good and bad) - highly shareable content' },
+            { icon: 'fa-magic', title: 'Satisfying Process', desc: 'Film repetitive tasks like pouring, cutting, or plating' },
+            { icon: 'fa-users', title: 'Staff Spotlight', desc: 'Introduce your team - builds connection with audience' },
+            { icon: 'fa-question', title: 'Myth Busting', desc: 'Address common misconceptions in your industry' },
+            { icon: 'fa-calendar', title: 'Day in the Life', desc: 'POV content showing a full day at your business' }
+        ];
+
+        // Posting times data
+        const postingTimes = [
+            { time: '6:00 PM - 9:00 PM', engagement: 92, label: 'Peak' },
+            { time: '12:00 PM - 2:00 PM', engagement: 78, label: 'High' },
+            { time: '9:00 AM - 11:00 AM', engagement: 65, label: 'Good' },
+            { time: '9:00 PM - 11:00 PM', engagement: 58, label: 'Moderate' }
+        ];
+
+        // Format performance data
+        const formatPerformance = [
+            { format: 'Short-form video (15-30s)', engagement: 94 },
+            { format: 'Tutorial/How-to', engagement: 87 },
+            { format: 'Behind-the-scenes', engagement: 82 },
+            { format: 'Before/After reveals', engagement: 79 },
+            { format: 'Carousel posts', engagement: 68 }
+        ];
+
+        // State
+        let currentFilters = { platform: 'all', category: 'all' };
+        let bookmarks = JSON.parse(localStorage.getItem('trendspotter_bookmarks') || '[]');
+        let displayedContent = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHashtags();
+            renderContent();
+            renderIdeas();
+            renderAnalytics();
+            updateBookmarkCount();
+        });
+
+        // Render functions
+        function renderHashtags() {
+            const container = document.getElementById('hashtagContainer');
+            container.innerHTML = trendingHashtags.map(h => `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer transition">
+                    ${h.tag}
+                    <span class="ml-2 text-xs text-green-500"><i class="fas fa-arrow-up"></i>${h.growth}%</span>
+                </span>
+            `).join('');
         }
 
-        const wakeSelect = document.getElementById('wakeTime');
-        const sleepSelect = document.getElementById('sleepTime');
-        populateHourDropdown(wakeSelect);
-        populateHourDropdown(sleepSelect);
+        function renderContent() {
+            const container = document.getElementById('contentGrid');
+            let filtered = trendingContent;
 
-        function addTrainingType() {
-            const container = document.getElementById('trainingTypes');
-            const newTrainingDiv = document.createElement('div');
-            newTrainingDiv.classList.add('flex', 'items-center', 'space-x-2');
-            newTrainingDiv.innerHTML = `
-                <select class="trainingType w-2/3 p-2 border rounded-md">
-                    <option value="0">Select Training Type</option>
-                    <option value="3">Yoga/Pilates (MET: 3)</option>
-                    <option value="4.5">Weightlifting (MET: 4.5)</option>
-                    <option value="7">Cycling (MET: 7)</option>
-                    <option value="8">Swimming (MET: 8)</option>
-                    <option value="9">Running (MET: 9)</option>
-                    <option value="10">HIIT/Crossfit (MET: 10)</option>
-                </select>
-                <input type="number" class="trainingHours w-1/3 p-2 border rounded-md" min="0" max="40" placeholder="Hours" required>
-            `;
-            container.appendChild(newTrainingDiv);
-        }
+            if (currentFilters.platform !== 'all') {
+                filtered = filtered.filter(c => c.platform === currentFilters.platform);
+            }
+            if (currentFilters.category !== 'all') {
+                filtered = filtered.filter(c => c.category === currentFilters.category);
+            }
 
-        function updateSessionTimes() {
-            const sessions = parseInt(document.getElementById('sessionsPerDay').value) || 1;
-            const container = document.getElementById('sessionTimes');
-            container.innerHTML = '';
-            for (let i = 1; i <= sessions; i++) {
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <label for="sessionTime${i}" class="block text-sm font-medium text-gray-700">Session ${i} Start Hour (24-hour format)</label>
-                    <select id="sessionTime${i}" class="mt-1 block w-full p-2 border rounded-md" required>
-                        <option value="">Select hour</option>
-                    </select>
+            displayedContent = filtered;
+            document.getElementById('contentCount').textContent = `Showing ${filtered.length} results`;
+
+            container.innerHTML = filtered.map(content => {
+                const isBookmarked = bookmarks.some(b => b.id === content.id);
+                const platformColors = {
+                    instagram: 'bg-gradient-to-r from-purple-500 to-pink-500',
+                    tiktok: 'bg-black',
+                    facebook: 'bg-blue-600',
+                    youtube: 'bg-red-600'
+                };
+                const platformIcons = {
+                    instagram: 'fab fa-instagram',
+                    tiktok: 'fab fa-tiktok',
+                    facebook: 'fab fa-facebook',
+                    youtube: 'fab fa-youtube'
+                };
+
+                return `
+                    <div class="bg-white rounded-2xl shadow-sm overflow-hidden card-hover">
+                        <div class="relative">
+                            <img src="${content.thumbnail}" alt="${content.title}" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 left-3">
+                                <span class="${platformColors[content.platform]} text-white px-3 py-1 rounded-full text-xs font-medium platform-badge">
+                                    <i class="${platformIcons[content.platform]} mr-1"></i>${content.platform.charAt(0).toUpperCase() + content.platform.slice(1)}
+                                </span>
+                            </div>
+                            <div class="absolute top-3 right-3">
+                                <button onclick="toggleBookmark(${content.id})" class="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition ${isBookmarked ? 'text-amber-500' : 'text-gray-400'}">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-3 right-3 bg-green-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
+                                <i class="fas fa-fire mr-1"></i>+${content.growth}%
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">${content.category}</span>
+                                <span class="text-xs text-gray-500">${content.posted}</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-1 line-clamp-2">${content.title}</h3>
+                            <p class="text-sm text-gray-500 mb-3">${content.creator}</p>
+                            <div class="grid grid-cols-4 gap-2 text-center">
+                                <div>
+                                    <p class="text-xs text-gray-500">Views</p>
+                                    <p class="font-bold text-gray-800 text-sm">${formatNumber(content.views)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Likes</p>
+                                    <p class="font-bold text-gray-800 text-sm">${formatNumber(content.likes)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Shares</p>
+                                    <p class="font-bold text-gray-800 text-sm">${formatNumber(content.shares)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Engage</p>
+                                    <p class="font-bold text-green-500 text-sm">${content.engagement}%</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t flex flex-wrap gap-1">
+                                ${content.hashtags.slice(0, 3).map(tag => `<span class="text-xs text-primary">${tag}</span>`).join(' ')}
+                            </div>
+                        </div>
+                    </div>
                 `;
-                container.appendChild(div);
-                populateHourDropdown(document.getElementById(`sessionTime${i}`));
-            }
+            }).join('');
         }
 
-        // Initialize with 1 session
-        updateSessionTimes();
-
-        function formatTime(hour) {
-            const ampm = hour >= 12 ? 'pm' : 'am';
-            const h = hour % 12 || 12;
-            return h + ampm;
+        function renderIdeas() {
+            const container = document.getElementById('ideasGrid');
+            container.innerHTML = contentIdeas.map(idea => `
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur">
+                    <i class="fas ${idea.icon} text-2xl text-amber-300 mb-2"></i>
+                    <h3 class="font-semibold mb-1">${idea.title}</h3>
+                    <p class="text-sm text-indigo-100">${idea.desc}</p>
+                </div>
+            `).join('');
         }
 
-        function calculateMacros() {
-            console.log('Calculate button clicked');
-            try {
-                const wakeTime = parseInt(document.getElementById('wakeTime').value) || 6;
-                const sleepTime = parseInt(document.getElementById('sleepTime').value) || 22;
-                const weight = parseFloat(document.getElementById('weight').value) || 70;
-                const bodyFat = parseFloat(document.getElementById('bodyFat').value) || 20;
-                const steps = parseFloat(document.getElementById('steps').value) || 5000;
-                const macroGoal = document.getElementById('macroGoal').value || 'maintain';
-                const proteinPerKg = parseFloat(document.getElementById('proteinLevel').value) || 1.5;
-                const fatPerKg = parseFloat(document.getElementById('fatLevel').value) || 1.4;
-                const sessionsPerDay = parseInt(document.getElementById('sessionsPerDay').value) || 1;
+        function renderAnalytics() {
+            const timesContainer = document.getElementById('postingTimes');
+            timesContainer.innerHTML = postingTimes.map(t => `
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-600 w-40">${t.time}</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                        <div class="bg-primary rounded-full h-2" style="width: ${t.engagement}%"></div>
+                    </div>
+                    <span class="text-xs font-medium ${t.label === 'Peak' ? 'text-green-500' : 'text-gray-500'}">${t.label}</span>
+                </div>
+            `).join('');
 
-                console.log('Inputs parsed:', { wakeTime, sleepTime, weight, bodyFat, steps, macroGoal, proteinPerKg, fatPerKg, sessionsPerDay });
+            const formatContainer = document.getElementById('formatPerformance');
+            formatContainer.innerHTML = formatPerformance.map(f => `
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-600 w-48">${f.format}</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                        <div class="bg-secondary rounded-full h-2" style="width: ${f.engagement}%"></div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">${f.engagement}%</span>
+                </div>
+            `).join('');
+        }
 
-                // Collect session times with default
-                const sessionTimes = [];
-                for (let i = 1; i <= sessionsPerDay; i++) {
-                    const sessionTime = parseInt(document.getElementById(`sessionTime${i}`).value) || 8 + (i - 1) * 4; // Default spaced
-                    sessionTimes.push(sessionTime);
+        // Filter functions
+        function toggleFilter(type, value) {
+            currentFilters[type] = value;
+
+            // Update button styles
+            const buttons = document.querySelectorAll(`.${type}-filter`);
+            buttons.forEach(btn => {
+                if (btn.dataset.filter === value) {
+                    btn.classList.remove('bg-gray-100', 'text-gray-700');
+                    btn.classList.add('bg-primary', 'text-white');
+                } else {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('bg-gray-100', 'text-gray-700');
                 }
-                console.log('Session times:', sessionTimes);
+            });
 
-                // Validation with specific alerts
-                const errors = [];
-                if (isNaN(wakeTime)) errors.push('Select wake time.');
-                if (isNaN(sleepTime)) errors.push('Select sleep time.');
-                if (weight <= 0) errors.push('Enter valid weight.');
-                if (bodyFat < 0 || bodyFat > 100) errors.push('Body fat % between 0-100.');
-                if (steps < 1000 || steps > 10000) errors.push('Steps between 1000-10000.');
+            renderContent();
+        }
 
-                if (errors.length > 0) {
-                    console.log('Validation errors:', errors);
-                    alert('Please fix: ' + errors.join(' '));
-                    return;
-                }
-                console.log('Validation passed');
-
-                // Calculate lean body mass
-                const leanBodyMass = weight * (1 - bodyFat / 100);
-                console.log('LBM:', leanBodyMass);
-
-                // Collect training data
-                const trainingTypes = document.querySelectorAll('.trainingType');
-                const trainingHours = document.querySelectorAll('.trainingHours');
-                let totalHours = 0;
-                const trainingData = [];
-                for (let i = 0; i < trainingTypes.length; i++) {
-                    const met = parseFloat(trainingTypes[i].value) || 0;
-                    const hours = parseFloat(trainingHours[i].value) || 0;
-                    if (met > 0 && hours > 0) {
-                        trainingData.push({ met, hours });
-                        totalHours += hours;
-                    }
-                }
-
-                if (totalHours < 1 || totalHours > 40) {
-                    console.log('Training hours invalid:', totalHours);
-                    alert('Total exercise hours must be between 1 and 40.');
-                    return;
-                }
-                console.log('Training data:', trainingData);
-
-                // Calculate BMR (Katch-McArdle)
-                const bmr = 370 + 21.6 * leanBodyMass;
-                console.log('BMR:', bmr);
-
-                // Base TDEE
-                const baseTdee = bmr * 1.2;
-                console.log('Base TDEE:', baseTdee);
-
-                // Calories from steps
-                const metSteps = 3.5;
-                const stepsPerHour = 6000;
-                const stepsCal = metSteps * weight * (steps / stepsPerHour);
-                console.log('Steps calories:', stepsCal);
-
-                // Calories from exercise
-                let exerciseCalPerDay = 0;
-                for (const { met, hours } of trainingData) {
-                    exerciseCalPerDay += met * weight * (hours / 7);
-                }
-                console.log('Exercise calories per day:', exerciseCalPerDay);
-
-                // TDEE
-                const tdee = baseTdee + stepsCal + exerciseCalPerDay;
-                console.log('TDEE:', tdee);
-
-                // Calorie adjustment
-                let calories;
-                let deficitSurplus;
-                switch (macroGoal) {
-                    case 'aggressiveCut':
-                        calories = tdee * 0.7;
-                        deficitSurplus = '30% deficit';
-                        break;
-                    case 'moderateCut':
-                        calories = tdee * 0.85;
-                        deficitSurplus = '15% deficit';
-                        break;
-                    case 'recomp':
-                        calories = tdee * 0.95;
-                        deficitSurplus = '5% deficit';
-                        break;
-                    case 'aggressiveBulk':
-                        calories = tdee * 1.2;
-                        deficitSurplus = '20% surplus';
-                        break;
-                    case 'performance':
-                        calories = tdee * 1.1;
-                        deficitSurplus = '10% surplus';
-                        break;
-                    default:
-                        calories = tdee;
-                        deficitSurplus = 'maintenance';
-                }
-                console.log('Adjusted calories:', calories);
-
-                // Macros
-                const proteinGrams = Math.round(weight * proteinPerKg);
-                const proteinCalories = proteinGrams * 4;
-                const fatGrams = Math.round(leanBodyMass * fatPerKg);
-                const fatCalories = fatGrams * 9;
-                const carbCalories = calories - (proteinCalories + fatCalories);
-                const carbGrams = Math.round(carbCalories / 4);
-                console.log('Macros:', { proteinGrams, fatGrams, carbGrams });
-
-                if (carbGrams < 0) {
-                    alert('Warning: Carbohydrate grams are negative. Consider lowering protein or fat levels, or increasing exercise hours/steps for more calories.');
-                }
-
-                // Populate daily macros
-                document.getElementById('calories').textContent = `Calories: ${Math.round(calories)} kcal`;
-                document.getElementById('protein').textContent = `Protein: ${proteinGrams}g`;
-                document.getElementById('carbs').textContent = `Carbohydrates: ${carbGrams}g`;
-                document.getElementById('fats').textContent = `Fats: ${fatGrams}g`;
-                console.log('Daily macros populated');
-
-                // Breakdown
-                const breakdown = `
-Lean Body Mass: ${Math.round(leanBodyMass)} kg<br>
-BMR (Katch-McArdle): ${Math.round(bmr)} kcal<br>
-Base TDEE (sedentary): ${Math.round(baseTdee)} kcal<br>
-Calories from steps: ${Math.round(stepsCal)} kcal<br>
-Calories from exercise: ${Math.round(exerciseCalPerDay)} kcal<br>
-Total TDEE: ${Math.round(tdee)} kcal<br>
-Calorie adjustment (${deficitSurplus}): ${Math.round(calories)} kcal<br>
-Protein (${proteinPerKg}g/kg total weight): ${proteinGrams}g (${proteinCalories} kcal)<br>
-Fats (${fatPerKg}g/kg lean mass): ${fatGrams}g (${fatCalories} kcal)<br>
-Carbs (remaining): ${carbGrams}g (${Math.round(carbCalories)} kcal)
-                `;
-                document.getElementById('breakdown').innerHTML = breakdown;
-                console.log('Breakdown populated');
-
-                // Partitioning timeline
-                try {
-                    console.log('Starting partitioning');
-                    const partitioningDiv = document.getElementById('partitioning');
-                    partitioningDiv.innerHTML = '';
-
-                    // Total workout fractions based on goal
-                    let totalWorkoutCarb = 0.5;
-                    let totalWorkoutProtein = 0.5;
-                    let totalWorkoutFat = 0.3;
-
-                    if (macroGoal === 'performance' || macroGoal === 'aggressiveBulk') {
-                        totalWorkoutCarb = 0.7;
-                        totalWorkoutProtein = 0.4;
-                        totalWorkoutFat = 0.2;
-                    } else if (macroGoal === 'aggressiveCut' || macroGoal === 'recomp') {
-                        totalWorkoutCarb = 0.4;
-                        totalWorkoutProtein = 0.6;
-                        totalWorkoutFat = 0.4;
-                    }
-                    console.log('Workout fractions:', { totalWorkoutCarb, totalWorkoutProtein, totalWorkoutFat });
-
-                    // Per session fractions
-                    const perSessionCarb = totalWorkoutCarb / sessionsPerDay;
-                    const perSessionProtein = totalWorkoutProtein / sessionsPerDay;
-                    const perSessionFat = totalWorkoutFat / sessionsPerDay;
-                    console.log('Per session:', { perSessionCarb, perSessionProtein, perSessionFat });
-
-                    // Within session distribution
-                    const carbPrePct = 0.3, carbIntraPct = 0.3, carbPostPct = 0.4;
-                    const proteinPrePct = 0.3, proteinIntraPct = 0.2, proteinPostPct = 0.5;
-                    const fatPrePct = 0.4, fatIntraPct = 0.2, fatPostPct = 0.4;
-
-                    // Remaining for other meals
-                    const numOtherMeals = 3;
-                    const remainingCarb = 1 - totalWorkoutCarb;
-                    const remainingProtein = 1 - totalWorkoutProtein;
-                    const remainingFat = 1 - totalWorkoutFat;
-                    const carbOther = remainingCarb / numOtherMeals;
-                    const proteinOther = remainingProtein / numOtherMeals;
-                    const fatOther = remainingFat / numOtherMeals;
-                    console.log('Remaining for other meals:', { remainingCarb, remainingProtein, remainingFat });
-
-                    // Events
-                    const events = [];
-                    sessionTimes.forEach((startHour, index) => {
-                        const sessionNum = index + 1;
-
-                        events.push({
-                            hour: (startHour - 1 + 24) % 24,
-                            label: `${formatTime(startHour - 1)} - Pre-workout (Session ${sessionNum})`,
-                            type: 'pre'
-                        });
-
-                        events.push({
-                            hour: startHour,
-                            label: `${formatTime(startHour)} - Intra-workout (Session ${sessionNum})`,
-                            type: 'intra'
-                        });
-
-                        events.push({
-                            hour: (startHour + 1) % 24,
-                            label: `${formatTime(startHour + 1)} - Post-workout (Session ${sessionNum})`,
-                            type: 'post'
-                        });
-                    });
-                    console.log('Events generated:', events);
-
-                    // Sort events by hour
-                    events.sort((a, b) => a.hour - b.hour);
-
-                    // Assign macros
-                    events.forEach(event => {
-                        let pFrac, cFrac, fFrac;
-                        if (event.type === 'pre') {
-                            pFrac = perSessionProtein * proteinPrePct;
-                            cFrac = perSessionCarb * carbPrePct;
-                            fFrac = perSessionFat * fatPrePct;
-                        } else if (event.type === 'intra') {
-                            pFrac = perSessionProtein * proteinIntraPct;
-                            cFrac = perSessionCarb * carbIntraPct;
-                            fFrac = perSessionFat * fatIntraPct;
-                        } else {
-                            pFrac = perSessionProtein * proteinPostPct;
-                            cFrac = perSessionCarb * carbPostPct;
-                            fFrac = perSessionFat * fatPostPct;
-                        }
-                        event.protein = Math.round(proteinGrams * pFrac);
-                        event.carbs = Math.round(carbGrams * cFrac);
-                        event.fats = Math.round(fatGrams * fFrac);
-                    });
-                    console.log('Events with macros:', events);
-
-                    // Generate HTML for partitioning
-                    let html = '<ul class="list-none space-y-2">';
-                    if (events.length === 0) {
-                        html += '<li class="p-2 bg-gray-50 rounded-md">No partitioning data—ensure sessions and times are selected.</li>';
-                    } else {
-                        events.forEach(event => {
-                            html += `<li class="p-2 bg-gray-50 rounded-md"><strong>${event.label}:</strong> Protein ${event.protein}g, Carbs ${event.carbs}g, Fats ${event.fats}g</li>`;
-                        });
-                    }
-
-                    // Other meals
-                    const otherProtein = Math.round(proteinGrams * proteinOther);
-                    const otherCarbs = Math.round(carbGrams * carbOther);
-                    const otherFats = Math.round(fatGrams * fatOther);
-
-                    // Add other meals timeline
-                    const activeHours = sleepTime > wakeTime ? sleepTime - wakeTime : sleepTime - wakeTime + 24;
-                    const mealIntervals = activeHours / (numOtherMeals + 1);
-                    const otherMealTimes = [];
-                    let currentTime = wakeTime;
-                    for (let i = 0; i < numOtherMeals; i++) {
-                        currentTime += mealIntervals;
-                        let mealHour = Math.floor(currentTime) % 24;
-                        // Avoid overlap
-                        while (events.some(e => e.hour === mealHour)) {
-                            currentTime += 1;
-                            mealHour = Math.floor(currentTime) % 24;
-                        }
-                        otherMealTimes.push(mealHour);
-                    }
-
-                    otherMealTimes.sort((a, b) => a - b);
-                    otherMealTimes.forEach((hour, index) => {
-                        html += `<li class="p-2 bg-gray-50 rounded-md"><strong>${formatTime(hour)} - Other Meal ${index + 1}:</strong> Protein ${otherProtein}g, Carbs ${otherCarbs}g, Fats ${otherFats}g</li>`;
-                    });
-                    html += '</ul>';
-                    console.log('Generated HTML:', html);
-
-                    partitioningDiv.innerHTML = html || '<p>No partitioning data generated—check console for issues.</p>';
-                    console.log('Partitioning populated');
-                } catch (partError) {
-                    console.error('Error in partitioning:', partError);
-                    partitioningDiv.innerHTML = '<p>Error generating timeline—check console.</p>';
-                }
-
-                // Meal planner
-                document.getElementById('mealPlanner').innerHTML = '<p>Suggested Meal: Breakfast - Oatmeal (Carbs 30g, Protein 10g, Fats 5g)<br>Lunch - Chicken Salad (Protein 40g, Carbs 20g, Fats 15g)<br>Dinner - Salmon with Veggies (Protein 30g, Carbs 25g, Fats 20g)</p><p>Customize with allergies/filters in future updates.</p>';
-                console.log('Meal planner populated');
-
-                // Show results
-                document.getElementById('results').classList.remove('hidden');
-                console.log('Results displayed');
-            } catch (error) {
-                console.error('Error in calculateMacros:', error);
-                alert('An error occurred. Check console for details.');
+        function sortContent() {
+            const sortBy = document.getElementById('sortBy').value;
+            switch(sortBy) {
+                case 'views':
+                    trendingContent.sort((a, b) => b.views - a.views);
+                    break;
+                case 'engagement':
+                    trendingContent.sort((a, b) => b.engagement - a.engagement);
+                    break;
+                case 'growth':
+                    trendingContent.sort((a, b) => b.growth - a.growth);
+                    break;
+                case 'recent':
+                    // In real app, sort by actual timestamp
+                    break;
             }
+            renderContent();
+        }
+
+        function filterByTime() {
+            // In real app, filter by actual timestamps
+            showToast('Filter updated');
+            renderContent();
+        }
+
+        // Bookmark functions
+        function toggleBookmark(id) {
+            const content = trendingContent.find(c => c.id === id);
+            const existingIndex = bookmarks.findIndex(b => b.id === id);
+
+            if (existingIndex > -1) {
+                bookmarks.splice(existingIndex, 1);
+                showToast('Removed from saved');
+            } else {
+                bookmarks.push(content);
+                showToast('Saved to bookmarks');
+            }
+
+            localStorage.setItem('trendspotter_bookmarks', JSON.stringify(bookmarks));
+            updateBookmarkCount();
+            renderContent();
+            renderBookmarks();
+        }
+
+        function updateBookmarkCount() {
+            document.getElementById('bookmarkCount').textContent = bookmarks.length;
+        }
+
+        function toggleBookmarks() {
+            const sidebar = document.getElementById('bookmarksSidebar');
+            const overlay = document.getElementById('overlay');
+
+            sidebar.classList.toggle('translate-x-full');
+            overlay.classList.toggle('hidden');
+            renderBookmarks();
+        }
+
+        function renderBookmarks() {
+            const container = document.getElementById('bookmarksList');
+            if (bookmarks.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No saved content yet.<br>Click the bookmark icon on any post to save it.</p>';
+                return;
+            }
+
+            container.innerHTML = bookmarks.map(b => `
+                <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg mb-3">
+                    <img src="${b.thumbnail}" class="w-16 h-16 rounded-lg object-cover">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">${b.title}</p>
+                        <p class="text-xs text-gray-500">${b.creator}</p>
+                        <p class="text-xs text-green-500 mt-1"><i class="fas fa-fire mr-1"></i>${b.engagement}% engagement</p>
+                    </div>
+                    <button onclick="toggleBookmark(${b.id})" class="text-gray-400 hover:text-red-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Export functions
+        function exportReport() {
+            const report = {
+                generatedAt: new Date().toISOString(),
+                filters: currentFilters,
+                summary: {
+                    totalContent: displayedContent.length,
+                    avgEngagement: (displayedContent.reduce((a, b) => a + b.engagement, 0) / displayedContent.length).toFixed(1) + '%',
+                    topPlatform: getMostCommon(displayedContent.map(c => c.platform)),
+                    topCategory: getMostCommon(displayedContent.map(c => c.category))
+                },
+                trendingHashtags: trendingHashtags,
+                content: displayedContent.map(c => ({
+                    title: c.title,
+                    creator: c.creator,
+                    platform: c.platform,
+                    category: c.category,
+                    views: c.views,
+                    likes: c.likes,
+                    engagement: c.engagement,
+                    hashtags: c.hashtags
+                })),
+                contentIdeas: contentIdeas,
+                bestPostingTimes: postingTimes
+            };
+
+            downloadJSON(report, 'trendspotter-report.json');
+            showToast('Report exported!');
+        }
+
+        function exportBookmarks() {
+            if (bookmarks.length === 0) {
+                showToast('No bookmarks to export');
+                return;
+            }
+
+            const data = bookmarks.map(b => ({
+                title: b.title,
+                creator: b.creator,
+                platform: b.platform,
+                category: b.category,
+                engagement: b.engagement,
+                hashtags: b.hashtags,
+                description: b.description
+            }));
+
+            downloadJSON(data, 'saved-content.json');
+            showToast('Bookmarks exported!');
+        }
+
+        // Utility functions
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+            return num.toString();
+        }
+
+        function getMostCommon(arr) {
+            const counts = {};
+            arr.forEach(x => counts[x] = (counts[x] || 0) + 1);
+            return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        }
+
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+
+        function loadMore() {
+            showToast('Loading more content...');
+            // In real app, fetch more content from API
+        }
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed'));
         }
     </script>
 </body>
