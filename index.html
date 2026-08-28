@@ -1895,6 +1895,7 @@ const state = {
   reels: { list: [], loaded:false },
   myWorkouts: [],
   activeUserWorkout: null,
+  feedLoaded: false,
 };
 
 function showToast(msg, isError){
@@ -2349,6 +2350,7 @@ async function loadAndRenderFeed(){
   } else {
     state.feed = await db.getFeed();
   }
+  state.feedLoaded = true;
   await hydrateTaggedProfiles(state.feed);
   await renderLiveFeed();
   await renderSuggestedStrip();
@@ -3741,7 +3743,7 @@ function setView(name, opts){
       history.replaceState(null, '', window.location.pathname);
     }
   }
-  if(name === 'feed') loadAndRenderFeed();
+  if(name === 'feed' && !state.feedLoaded) loadAndRenderFeed();
   if(name === 'reels') renderReels();
   if(name === 'whiteboard') renderWhiteboard();
   if(name === 'workouts') renderMyWorkouts();
