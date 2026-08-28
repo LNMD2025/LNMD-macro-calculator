@@ -557,12 +557,16 @@ main.feed-col{min-width:0;padding-bottom:70px}
 .story-viewer-head span{color:#fff;font-weight:700;font-size:.85rem;text-shadow:0 1px 3px oklch(0 0 0/.5)}
 .story-viewer-head .sv-close{margin-left:auto;color:#fff}
 .story-viewer-head .sv-close svg{width:22px;height:22px}
-.story-viewer-media{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.story-viewer-media{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 .story-viewer-media img,.story-viewer-media video{width:100%;height:100%;object-fit:cover}
 .story-viewer-tap{position:absolute;top:0;bottom:0;width:50%;z-index:4}
 .story-viewer-tap.left{left:0}
 .story-viewer-tap.right{right:0}
 .story-caption{position:absolute;bottom:16px;left:14px;right:14px;color:#fff;font-size:.85rem;text-shadow:0 1px 3px oklch(0 0 0/.6);z-index:5}
+.story-wod-wrap{position:absolute;left:14px;right:14px;bottom:72px;z-index:6}
+.story-wod-wrap .wod-card{margin:0 0 8px;background:rgba(0,0,0,.55);color:#fff;border-color:rgba(255,255,255,.2)}
+.story-wod-wrap .wod-sets-label{color:#fff}
+.reel-wod-btn{margin-top:8px;width:auto;padding:8px 12px;font-size:.78rem}
 
 
 /* ===== PWA / MOBILE HARDENING ===== */
@@ -612,6 +616,32 @@ input,select,textarea{font-size:16px}
 .macro-timeline li{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:10px 12px;font-size:.85rem}
 .macro-breakdown{margin-bottom:16px;color:var(--color-text-muted);font-size:.85rem}
 
+/* ===== WORKOUT BUILDER / CARDS ===== */
+.wod-builder{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px;margin:0 0 14px;background:var(--color-surface-2)}
+.wod-builder h4{font-size:.95rem;margin-bottom:10px}
+.wod-row{display:flex;gap:8px;margin-bottom:8px}
+.wod-row input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:16px}
+.wod-sets{max-width:88px}
+.wod-move-list{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.wod-move{display:flex;gap:8px;align-items:center}
+.wod-move input{flex:1;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:16px}
+.wod-move button{min-width:40px;min-height:40px;color:var(--color-text-muted)}
+.wod-card{margin:0 14px 10px;padding:12px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface)}
+.wod-card h3{font-size:1.05rem;margin-bottom:4px}
+.wod-card .wod-sets-label{font-size:.78rem;font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+.wod-card ol{margin:0 0 12px 18px;font-size:.9rem}
+.wod-card ol li{margin-bottom:4px}
+.wod-complete-btn{width:100%}
+.tagged-in-post{padding:0 14px 8px}
+.uw-list{padding:8px 16px 32px;display:flex;flex-direction:column;gap:12px}
+.uw-item{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;background:var(--color-surface)}
+.uw-item .st{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-primary)}
+.uw-item h3{margin:4px 0 8px;font-size:1.05rem}
+.uw-item ol{margin:0 0 10px 18px;font-size:.88rem}
+.uw-actions{display:flex;gap:8px;flex-wrap:wrap}
+.uw-empty{padding:48px 24px;text-align:center;color:var(--color-text-muted)}
+.program-price.free{background:var(--color-success-highlight);color:var(--color-success)}
+
 </style>
 </head>
 <body>
@@ -625,6 +655,7 @@ input,select,textarea{font-size:16px}
     <button class="nav-item" data-view="reels"><svg data-lucide="clapperboard"></svg><span>Reels</span></button>
     <button class="nav-item" data-view="explore"><svg data-lucide="search"></svg><span>Explore</span></button>
     <button class="nav-item" data-view="programs"><svg data-lucide="dumbbell"></svg><span>Programs</span></button>
+    <button class="nav-item" data-view="workouts"><svg data-lucide="list-checks"></svg><span>My Workouts</span></button>
     <button class="nav-item" data-view="free"><svg data-lucide="calculator"></svg><span>Free Tools</span></button>
     <button class="nav-item" data-view="messages"><svg data-lucide="send"></svg><span>Messages</span></button>
     <button class="nav-item" id="sidebarProgrammingBtn" data-view="builder" style="display:none"><svg data-lucide="calendar-cog"></svg><span>Programming</span></button>
@@ -755,6 +786,13 @@ input,select,textarea{font-size:16px}
       <div class="explore-grid" id="exploreGrid"></div>
     </section>
 
+    <!-- MY WORKOUTS -->
+    <section class="view" id="view-workouts">
+      <div class="view-header"><h2>My Workouts</h2></div>
+      <p class="free-lead" style="padding:0 16px">Workouts you saved from the feed. Complete one, then share it — the creator is tagged automatically.</p>
+      <div id="myWorkoutsList" class="uw-list"></div>
+    </section>
+
     <!-- PROGRAMS VIEW -->
     <section class="view" id="view-programs">
       <div class="view-header">
@@ -765,6 +803,7 @@ input,select,textarea{font-size:16px}
           <button data-filter="provider">Providers</button>
         </div>
       </div>
+      <p class="free-lead" style="padding:0 16px 8px">Everything on Cadence is free after you sign up. Paid programs can come later — nothing is locked today.</p>
       <div class="programs-list" id="programsList"></div>
     </section>
 
@@ -1636,6 +1675,7 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
     <div class="more-drawer-handle"><span></span></div>
     <button class="more-drawer-item" data-view="explore"><svg data-lucide="search"></svg>Explore</button>
     <button class="more-drawer-item" data-view="programs"><svg data-lucide="dumbbell"></svg>Programs</button>
+    <button class="more-drawer-item" data-view="workouts"><svg data-lucide="list-checks"></svg>My Workouts</button>
     <button class="more-drawer-item" data-view="free"><svg data-lucide="calculator"></svg>Free Tools</button>
     <button class="more-drawer-item" id="moreDrawerProgrammingBtn" data-view="builder" style="display:none"><svg data-lucide="calendar-cog"></svg>Programming Studio</button>
     <button class="more-drawer-item" id="moreDrawerNotifBtn"><svg data-lucide="bell"></svg>Notifications</button>
@@ -1672,6 +1712,16 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
         <button data-kind="reel">Reel</button>
       </div>
       <div id="reelCropHint" class="reel-crop-hint" style="display:none"><svg data-lucide="smartphone"></svg><span>Reels look best vertical (9:16). Film portrait for the full-screen feed.</span></div>
+      <div class="wod-builder" id="wodBuilder">
+        <h4>Workout</h4>
+        <p style="font-size:.78rem;color:var(--color-text-muted);margin-bottom:10px">Build the session others can save and complete. Photo is optional.</p>
+        <div class="wod-row">
+          <input id="wodTitle" type="text" placeholder="e.g. Hyrox workout" maxlength="80">
+          <input id="wodSets" class="wod-sets" type="number" inputmode="numeric" min="1" max="50" placeholder="Sets">
+        </div>
+        <div class="wod-move-list" id="wodMoveList"></div>
+        <button type="button" class="btn btn-ghost" id="addWodMoveBtn">+ Add movement</button>
+      </div>
       <div id="uploadPreviewWrap"></div>
       <label class="upload-drop" for="fileInput" id="uploadDropZone" style="display:block;cursor:pointer">
         <svg data-lucide="video"></svg>
@@ -1683,10 +1733,6 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
         <div style="font-size:.76rem;color:var(--color-text-muted);margin-top:4px" id="uploadProgressLabel">Uploading…</div>
       </div>
       <div class="field"><label for="captionInput">Caption</label><textarea id="captionInput" placeholder="Share what you're working on today..."></textarea></div>
-      <div class="toggle-row">
-        <div><strong style="font-size:.88rem">Attach to a program</strong><div style="font-size:.78rem;color:var(--color-text-muted)">Tag this post to one of your published programs</div></div>
-        <button class="switch" id="programSwitch" role="switch" aria-checked="false" aria-label="Attach to a program"></button>
-      </div>
       <div class="toggle-row" style="border-top:1px solid var(--color-divider)">
         <div><strong style="font-size:.88rem">Tag people</strong><div style="font-size:.78rem;color:var(--color-text-muted)" id="tagSummary">No one tagged yet</div></div>
         <button class="btn btn-ghost" id="openTagFromCreate" style="font-size:.78rem;padding:8px 14px"><svg data-lucide="user-plus" style="width:14px;height:14px"></svg></button>
@@ -1696,12 +1742,26 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
   </div>
 </div>
 
+<!-- ============ COMPLETE WORKOUT SHEET ============ -->
+<div class="overlay" id="completeWodOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="completeWodTitle">Complete workout</h3><button id="closeCompleteWod" aria-label="Close"><svg data-lucide="x"></svg></button></div>
+    <div class="modal-body">
+      <div id="completeWodPreview" class="wod-card" style="margin:0 0 14px"></div>
+      <div class="field"><label for="completeWodResult">Your result</label><input id="completeWodResult" type="text" placeholder="e.g. 38:12, 5 rounds, 180kg"></div>
+      <div class="field"><label for="completeWodNotes">Notes (optional)</label><textarea id="completeWodNotes" placeholder="How did it feel?"></textarea></div>
+      <button class="btn btn-primary btn-block" id="completeWodSaveBtn">Mark complete</button>
+      <button class="btn btn-ghost btn-block" id="completeWodShareBtn" style="margin-top:8px">Complete &amp; share</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ ROLE / ONBOARDING MODAL ============ -->
 <div class="overlay" id="roleOverlay">
   <div class="modal">
     <div class="modal-head"><h3>Choose your account type</h3><button id="closeRole" aria-label="Close"><svg data-lucide="x"></svg></button></div>
     <div class="role-select">
-      <p style="color:var(--color-text-muted);font-size:.88rem">You can upgrade anytime — start as an athlete, or set up your coach or provider profile now.</p>
+      <p style="color:var(--color-text-muted);font-size:.88rem">Cadence is free after you sign up. Pick how you show up — you can change this later.</p>
       <div class="role-cards" id="roleCards">
         <div class="role-card selected" data-role="athlete">
           <svg data-lucide="user"></svg>
@@ -1709,11 +1769,11 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
         </div>
         <div class="role-card" data-role="coach">
           <svg data-lucide="badge-check"></svg>
-          <div><h4>Coach</h4><p>Everything in Athlete, plus a verified coach badge, the ability to publish programs, and client progress tracking.</p></div>
+          <div><h4>Coach</h4><p>Everything in Athlete, plus a coach badge, free programs, and the Programming Studio.</p></div>
         </div>
         <div class="role-card" data-role="provider">
           <svg data-lucide="building-2"></svg>
-          <div><h4>Program provider</h4><p>List structured programs for sale or subscription, similar to SugarWOD — built for gyms, affiliates, and programming brands.</p></div>
+          <div><h4>Program provider</h4><p>Publish free structured programs for gyms and affiliates. Paid programs can come later — nothing is locked today.</p></div>
         </div>
       </div>
       <button class="btn btn-primary btn-block" style="margin-top:20px" id="confirmRole">Continue</button>
@@ -1833,6 +1893,8 @@ const state = {
     activeDay: null,        // program_days row for track+date
   },
   reels: { list: [], loaded:false },
+  myWorkouts: [],
+  activeUserWorkout: null,
 };
 
 function showToast(msg, isError){
@@ -1906,7 +1968,7 @@ const db = {
     return data || [];
   },
 
-  async createPost({ kind, mediaUrl, mediaType, caption, expiresAt }){
+  async createPost({ kind, mediaUrl, mediaType, caption, expiresAt, workout, taggedUserIds }){
     if(!state.user) throw new Error('Not signed in');
     const row = {
       user_id: state.user.id,
@@ -1915,10 +1977,70 @@ const db = {
       media_type: mediaType || null,
       caption: caption || null,
       expires_at: expiresAt || null,
+      workout: workout || null,
+      tagged_user_ids: taggedUserIds || [],
     };
     const { data, error } = await sb.from('posts').insert(row).select('*, profiles!inner(username, display_name, avatar_url)').single();
     if(error) throw error;
     return data;
+  },
+
+  async saveUserWorkout({ sourcePostId, sourceUserId, title, workout }){
+    if(!state.user) throw new Error('Not signed in');
+    const row = {
+      user_id: state.user.id,
+      source_post_id: sourcePostId || null,
+      source_user_id: sourceUserId || null,
+      title: title || 'Workout',
+      workout: workout || {},
+      status: 'saved'
+    };
+    const { data, error } = await sb.from('user_workouts')
+      .upsert(row, { onConflict: 'user_id,source_post_id' })
+      .select()
+      .single();
+    // Partial unique index may not support onConflict; fall back to insert-or-select
+    if(error){
+      const existing = await sb.from('user_workouts').select('*')
+        .eq('user_id', state.user.id).eq('source_post_id', sourcePostId).maybeSingle();
+      if(existing.data) return existing.data;
+      const retry = await sb.from('user_workouts').insert(row).select().single();
+      if(retry.error) throw retry.error;
+      return retry.data;
+    }
+    return data;
+  },
+
+  async listMyWorkouts(){
+    if(!state.user) return [];
+    const { data, error } = await sb.from('user_workouts').select('*')
+      .eq('user_id', state.user.id).order('created_at', { ascending: false });
+    if(error){ console.error('[db.listMyWorkouts]', error); return []; }
+    return data || [];
+  },
+
+  async completeUserWorkout(id, { result, notes, status }){
+    const { data, error } = await sb.from('user_workouts').update({
+      status: status || 'completed',
+      result: result || null,
+      notes: notes || null,
+      completed_at: new Date().toISOString()
+    }).eq('id', id).eq('user_id', state.user.id).select().single();
+    if(error) throw error;
+    return data;
+  },
+
+  async getProfilesByIds(ids){
+    if(!ids || !ids.length) return [];
+    const { data, error } = await sb.from('profiles').select('id, username, display_name, avatar_url').in('id', ids);
+    if(error){ console.error('[db.getProfilesByIds]', error); return []; }
+    return data || [];
+  },
+
+  async getFreePrograms(){
+    const { data, error } = await sb.from('programs').select('*').order('title');
+    if(error){ console.error('[db.getFreePrograms]', error); return []; }
+    return data || [];
   },
 
   async getStories(){
@@ -2227,6 +2349,7 @@ async function loadAndRenderFeed(){
   } else {
     state.feed = await db.getFeed();
   }
+  await hydrateTaggedProfiles(state.feed);
   await renderLiveFeed();
   await renderSuggestedStrip();
 }
@@ -2261,6 +2384,197 @@ async function renderSuggestedStrip(){
       }catch(err){ console.error('[follow suggested]', err); showToast('Could not follow', true); }
     });
   });
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function normalizeWorkout(w){
+  if(!w) return null;
+  if(typeof w === 'string'){ try{ w = JSON.parse(w); }catch(e){ return null; } }
+  const title = (w.title||'').trim();
+  const movements = Array.isArray(w.movements) ? w.movements.map(m=> (typeof m==='string'?m:(m && m.text)||'').trim()).filter(Boolean) : [];
+  if(!title && !movements.length) return null;
+  const sets = parseInt(w.sets,10);
+  return { title: title || 'Workout', sets: Number.isFinite(sets) && sets>0 ? sets : null, movements };
+}
+function workoutCardHtml(raw, extraClass){
+  const w = normalizeWorkout(raw);
+  if(!w) return '';
+  return `<div class="wod-card ${extraClass||''}">
+    <h3>${escapeHtml(w.title)}</h3>
+    ${w.sets ? `<div class="wod-sets-label">${w.sets} sets</div>` : ''}
+    <ol>${w.movements.map(m=>`<li>${escapeHtml(m)}</li>`).join('')}</ol>
+  </div>`;
+}
+function taggedLineHtml(p){
+  const tags = p.tagged_profiles || [];
+  if(!tags.length) return '';
+  return `<div class="tagged-in-post"><svg data-lucide="user-plus"></svg>Completed ${escapeHtml((normalizeWorkout(p.workout)||{}).title || 'this workout')} · tagged ${tags.map(t=>'@'+(t.username||'athlete')).join(', ')}</div>`;
+}
+function findPostById(id){
+  const sid = String(id);
+  const fromFeed = (state.feed||[]).find(p=>String(p.id)===sid);
+  if(fromFeed) return fromFeed;
+  const fromReels = ((state.reels && state.reels.list) || []).find(p=>String(p.id)===sid);
+  if(fromReels) return fromReels;
+  for(const g of (state.stories||[])){
+    const s = (g.stories||[]).find(p=>String(p.id)===sid);
+    if(s) return s;
+  }
+  return null;
+}
+function readWorkoutFromBuilder(){
+  const title = (document.getElementById('wodTitle')||{}).value || '';
+  const sets = (document.getElementById('wodSets')||{}).value || '';
+  const movements = Array.from(document.querySelectorAll('#wodMoveList input')).map(i=>i.value.trim()).filter(Boolean).map(text=>({text}));
+  if(!title.trim() && !movements.length) return null;
+  return { title: title.trim() || 'Workout', sets: parseInt(sets,10)||null, movements };
+}
+function addWodMoveRow(value){
+  const list = document.getElementById('wodMoveList');
+  if(!list) return;
+  const row = document.createElement('div');
+  row.className = 'wod-move';
+  row.innerHTML = `<input type="text" placeholder="e.g. 20 dumbbell snatches @22.5kg" value="${escapeHtml(value||'')}">
+    <button type="button" aria-label="Remove movement"><svg data-lucide="x" style="width:16px;height:16px"></svg></button>`;
+  row.querySelector('button').addEventListener('click', ()=>row.remove());
+  list.appendChild(row);
+  lucide.createIcons();
+}
+function resetWodBuilder(){
+  const title = document.getElementById('wodTitle');
+  const sets = document.getElementById('wodSets');
+  if(title) title.value = '';
+  if(sets) sets.value = '';
+  const list = document.getElementById('wodMoveList');
+  if(list) list.innerHTML = '';
+  addWodMoveRow();
+  addWodMoveRow();
+}
+
+async function saveAndOpenWorkout(postId){
+  if(!state.user){ showToast('Sign in to save workouts', true); showAuthGate(); return; }
+  const post = findPostById(postId);
+  const w = normalizeWorkout(post && post.workout);
+  if(!w){ showToast('This post has no workout', true); return; }
+  try{
+    const saved = await db.saveUserWorkout({
+      sourcePostId: post.id,
+      sourceUserId: post.user_id,
+      title: w.title,
+      workout: w
+    });
+    state.activeUserWorkout = saved;
+    openCompleteWodSheet(saved, post);
+    showToast('Saved to My Workouts');
+  }catch(err){
+    console.error('[saveAndOpenWorkout]', err);
+    showToast('Could not save workout', true);
+  }
+}
+
+function openCompleteWodSheet(saved, post){
+  const ov = document.getElementById('completeWodOverlay');
+  const preview = document.getElementById('completeWodPreview');
+  const titleEl = document.getElementById('completeWodTitle');
+  if(titleEl) titleEl.textContent = (saved && saved.title) || 'Complete workout';
+  if(preview){
+    preview.innerHTML = workoutCardHtml((saved && saved.workout) || (post && post.workout)) || '<p class="muted">Workout</p>';
+  }
+  const res = document.getElementById('completeWodResult');
+  const notes = document.getElementById('completeWodNotes');
+  if(res) res.value = (saved && saved.result) || '';
+  if(notes) notes.value = (saved && saved.notes) || '';
+  if(ov) ov.classList.add('active');
+}
+
+async function finishUserWorkout(alsoShare){
+  if(!state.user){ showToast('Sign in first', true); return; }
+  const saved = state.activeUserWorkout;
+  if(!saved){ showToast('Save the workout first', true); return; }
+  const result = (document.getElementById('completeWodResult')||{}).value || '';
+  const notes = (document.getElementById('completeWodNotes')||{}).value || '';
+  try{
+    const updated = await db.completeUserWorkout(saved.id, { result, notes });
+    state.activeUserWorkout = updated;
+    if(alsoShare){
+      const w = normalizeWorkout(updated.workout);
+      const creator = updated.source_user_id;
+      const tagged = (creator && creator !== state.user.id) ? [creator] : [];
+      const captionBits = [
+        `Completed ${w ? w.title : 'this workout'}`,
+        result ? `Result: ${result}` : '',
+        notes || ''
+      ].filter(Boolean);
+      const workoutPayload = w ? { title: w.title, sets: w.sets, movements: w.movements.map(t=>({ text: t })) } : null;
+      const newPost = await db.createPost({
+        kind: 'post',
+        caption: captionBits.join(' · '),
+        workout: workoutPayload,
+        taggedUserIds: tagged
+      });
+      if(tagged.length){
+        newPost.tagged_profiles = await db.getProfilesByIds(tagged);
+      }
+      state.feed.unshift(newPost);
+      await renderLiveFeed();
+      showToast('Shared — creator tagged');
+      setView('feed');
+    } else {
+      showToast('Marked complete');
+    }
+    document.getElementById('completeWodOverlay').classList.remove('active');
+    if(document.getElementById('view-workouts').classList.contains('active')) renderMyWorkouts();
+  }catch(err){
+    console.error('[finishUserWorkout]', err);
+    showToast('Could not complete workout', true);
+  }
+}
+
+async function renderMyWorkouts(){
+  const el = document.getElementById('myWorkoutsList');
+  if(!el) return;
+  if(!state.user){
+    el.innerHTML = `<div class="uw-empty"><h3>Sign in to keep workouts</h3><p>Save a session from the feed, complete it, then share it back.</p></div>`;
+    return;
+  }
+  const rows = await db.listMyWorkouts();
+  state.myWorkouts = rows;
+  if(!rows.length){
+    el.innerHTML = `<div class="uw-empty"><h3>No saved workouts yet</h3><p>Tap <strong>Complete this workout</strong> on a feed post to add it here.</p></div>`;
+    return;
+  }
+  el.innerHTML = rows.map(r=>{
+    const w = normalizeWorkout(r.workout) || { title: r.title, movements: [] };
+    return `<article class="uw-item" data-uw-id="${r.id}">
+      <div class="st">${r.status === 'completed' ? 'Completed' : 'Saved'}</div>
+      <h3>${escapeHtml(w.title)}</h3>
+      ${w.sets ? `<div class="wod-sets-label">${w.sets} sets</div>` : ''}
+      <ol>${(w.movements||[]).map(m=>`<li>${escapeHtml(m)}</li>`).join('')}</ol>
+      ${r.result ? `<p style="font-size:.85rem;margin-bottom:10px"><strong>Result:</strong> ${escapeHtml(r.result)}</p>` : ''}
+      <div class="uw-actions">
+        <button class="btn btn-primary" data-uw-complete="${r.id}">${r.status==='completed'?'Update / share':'Complete'}</button>
+      </div>
+    </article>`;
+  }).join('');
+  el.querySelectorAll('[data-uw-complete]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const row = (state.myWorkouts||[]).find(x=>String(x.id)===String(btn.dataset.uwComplete));
+      if(!row) return;
+      state.activeUserWorkout = row;
+      openCompleteWodSheet(row, null);
+    });
+  });
+}
+
+async function hydrateTaggedProfiles(posts){
+  const ids = [...new Set((posts||[]).flatMap(p=>p.tagged_user_ids||[]))];
+  if(!ids.length) return posts;
+  const people = await db.getProfilesByIds(ids);
+  const map = Object.fromEntries(people.map(p=>[p.id,p]));
+  posts.forEach(p=>{ p.tagged_profiles = (p.tagged_user_ids||[]).map(id=>map[id]).filter(Boolean); });
+  return posts;
 }
 
 async function renderLiveFeed(){
@@ -2310,6 +2624,8 @@ async function renderLiveFeed(){
           ? `<video src="${p.media_url}" muted loop playsinline></video><div class="play-badge"><svg data-lucide="play" style="width:14px;height:14px"></svg></div>`
           : `<img src="${p.media_url}" alt="Training post by ${name}" loading="lazy" decoding="async">`}
       </div>` : ''}
+      ${workoutCardHtml(p.workout)}
+      ${normalizeWorkout(p.workout) ? `<div style="padding:0 14px 8px"><button class="btn btn-primary wod-complete-btn" data-complete-post="${p.id}">Complete this workout</button></div>` : ''}
       <div class="post-actions">
         <button class="like-btn ${like.likedByMe?'liked':''}" data-post-id="${p.id}" aria-label="Like post"><svg data-lucide="heart"></svg></button>
         <button class="comment-btn" data-post-id="${p.id}" aria-label="Comment on post"><svg data-lucide="message-circle"></svg></button>
@@ -2319,6 +2635,7 @@ async function renderLiveFeed(){
       </div>
       <div class="post-likes" id="likeCount-${p.id}">${like.count.toLocaleString()} likes</div>
       ${p.caption ? `<div class="post-caption"><span class="cap-name">${handle}</span>${p.caption}</div>` : ''}
+      ${taggedLineHtml(p)}
       <div class="post-time">${timeAgoForPost(p)}</div>
     </article>`;
   }).join('');
@@ -2341,6 +2658,9 @@ function wireFeedInteractions(){
   });
   document.querySelectorAll('.feed-author-link').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); const u = el.dataset.username; if(u) navigateToProfile(u); });
+  });
+  document.querySelectorAll('[data-complete-post]').forEach(btn=>{
+    btn.addEventListener('click', ()=>saveAndOpenWorkout(btn.dataset.completePost));
   });
 }
 
@@ -2500,6 +2820,17 @@ function renderActiveStory(){
       mediaEl.innerHTML = `<img src="${story.media_url}" alt="Story">`;
     } else {
       mediaEl.innerHTML = `<div style="color:#fff;padding:24px;font-size:1.1rem;text-align:center">${story.caption || ''}</div>`;
+    }
+    if(normalizeWorkout(story.workout)){
+      const wrap = document.createElement('div');
+      wrap.className = 'story-wod-wrap';
+      wrap.innerHTML = workoutCardHtml(story.workout) + `<button class="btn btn-primary wod-complete-btn" data-complete-post="${story.id}">Complete this workout</button>`;
+      mediaEl.appendChild(wrap);
+      wrap.querySelector('[data-complete-post]').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        closeStoryViewer();
+        saveAndOpenWorkout(story.id);
+      });
     }
   }
   const progEl = document.getElementById('storyProgress');
@@ -2665,11 +2996,13 @@ function setUploadProgress(pct){
 }
 
 async function handleSubmitPost(){
-  if(!state.user){ showToast('Sign in to post', true); return; }
+  if(!state.user){ showToast('Sign in to post', true); showAuthGate(); return; }
   const captionEl = document.getElementById('captionInput');
-  const caption = captionEl ? captionEl.value.trim() : '';
+  const captionRaw = captionEl ? captionEl.value.trim() : '';
   const file = state.uploadFile;
-  if(!caption && !file){ showToast('Add a caption or media first', true); return; }
+  const workout = readWorkoutFromBuilder();
+  const caption = captionRaw || (workout ? workout.title : '');
+  if(!captionRaw && !file && !workout){ showToast('Add a workout, a caption, or a photo', true); return; }
   let mediaUrl = null, mediaType = null;
   const submitBtn = document.getElementById('submitPost');
   if(submitBtn) submitBtn.textContent = 'Sharing…';
@@ -2681,9 +3014,21 @@ async function handleSubmitPost(){
       setUploadProgress(100);
     }
     const expiresAt = selectedPostKind === 'story' ? new Date(Date.now() + 24*60*60*1000).toISOString() : null;
-    const newPost = await db.createPost({ kind: selectedPostKind, mediaUrl, mediaType, caption, expiresAt });
+    const newPost = await db.createPost({
+      kind: selectedPostKind,
+      mediaUrl,
+      mediaType,
+      caption,
+      expiresAt,
+      workout,
+      taggedUserIds: []
+    });
     if(selectedPostKind === 'story'){
       await loadAndRenderStories();
+    } else if(selectedPostKind === 'reel'){
+      state.reels.loaded = false;
+      state.feed.unshift(newPost);
+      await renderLiveFeed();
     } else {
       state.feed.unshift(newPost);
       await renderLiveFeed();
@@ -2693,14 +3038,16 @@ async function handleSubmitPost(){
     setStagedFile(null);
     if(fileInputEl) fileInputEl.value = '';
     setUploadProgress(null);
+    resetWodBuilder();
     const cropHint = document.getElementById('reelCropHint');
     if(cropHint) cropHint.style.display = 'none';
+    const dest = selectedPostKind;
     document.querySelectorAll('#postKindSeg button').forEach(b=>b.classList.toggle('active', b.dataset.kind==='post'));
     selectedPostKind = 'post';
-    showToast('Shared to Cadence');
+    showToast(dest === 'story' ? 'Story shared' : dest === 'reel' ? 'Reel posted' : 'Shared to Cadence');
   }catch(err){
     console.error('[handleSubmitPost]', err);
-    showToast('Could not share post', true);
+    showToast(err.message || 'Could not share post', true);
     setUploadProgress(null);
   }finally{
     if(submitBtn) submitBtn.textContent = 'Share';
@@ -2795,7 +3142,7 @@ const feedPosts = [
   {user:users[1], media:'https://picsum.photos/seed/wod1/900/1125', video:false, caption:'Week 6 of the Coastal Strength Hypertrophy Block is live — back squat testing day for everyone on the program.', likes:842, time:'2 HOURS AGO', program:'Coastal Strength Hypertrophy Block', locked:false, tags:[users[0]]},
   {user:users[2], media:'https://picsum.photos/seed/amy1/900/1125', video:true, caption:'Finally cracked a strict muscle-up 🔥 six months of strict pulling work paying off.', likes:391, time:'4 HOURS AGO', tags:[]},
   {user:users[0], media:'https://picsum.photos/seed/dean1/900/1125', video:true, caption:'Heavy deadlift day at DoughBros HQ gym. 180kg triple felt smooth — logging this to my own training feed.', likes:1204, time:'6 HOURS AGO', tags:[users[4], users[6]]},
-  {user:users[3], media:'https://picsum.photos/seed/iron1/900/1125', video:false, caption:'New affiliate cycle drops Monday — 8 weeks of engine-building conditioning for CrossFit boxes. Preview below, full plan is subscriber-only.', likes:566, time:'9 HOURS AGO', program:'Engine Block Vol. 3', locked:true, tags:[]},
+  {user:users[3], media:'https://picsum.photos/seed/iron1/900/1125', video:false, caption:'New affiliate cycle drops Monday — 8 weeks of engine-building conditioning for CrossFit boxes. The full plan is free on Cadence.', likes:566, time:'9 HOURS AGO', program:'Engine Block Vol. 3', locked:false, tags:[]},
   {user:users[4], media:'https://picsum.photos/seed/josh1/900/1125', video:false, caption:'Sub-19 5k this morning. Slow build, but the aerobic base is finally showing up in races.', likes:212, time:'YESTERDAY', tags:[], repostOf:users[5]},
   {user:users[5], media:'https://picsum.photos/seed/runstrong1/900/1125', video:true, caption:'Client PR alert: first sub-50 10km after 14 weeks on the RunStrong base-building plan.', likes:328, time:'YESTERDAY', program:'RunStrong Base Builder', locked:false, tags:[]},
 ];
@@ -2804,9 +3151,9 @@ const explorePosts = Array.from({length:15}).map((_,i)=>({img:`https://picsum.ph
 const profilePosts = Array.from({length:9}).map((_,i)=>({img:`https://picsum.photos/seed/deanpost${i}/500/500`, video:i%3===0}));
 
 const programs = [
-  {provider:users[1], title:'Coastal Strength Hypertrophy Block', cover:'https://picsum.photos/seed/prog1/640/360', price:'$29/mo', weeks:8, level:'Intermediate', kind:'provider'},
-  {provider:users[3], title:'Engine Block Vol. 3', cover:'https://picsum.photos/seed/prog2/640/360', price:'$19', weeks:8, level:'All levels', kind:'provider'},
-  {provider:users[5], title:'RunStrong Base Builder', cover:'https://picsum.photos/seed/prog3/640/360', price:'$15/mo', weeks:14, level:'Beginner', kind:'coach'},
+  {provider:users[1], title:'Coastal Strength Hypertrophy Block', cover:'https://picsum.photos/seed/prog1/640/360', price:'Free', weeks:8, level:'Intermediate', kind:'provider'},
+  {provider:users[3], title:'Engine Block Vol. 3', cover:'https://picsum.photos/seed/prog2/640/360', price:'Free', weeks:8, level:'All levels', kind:'provider'},
+  {provider:users[5], title:'RunStrong Base Builder', cover:'https://picsum.photos/seed/prog3/640/360', price:'Free', weeks:14, level:'Beginner', kind:'coach'},
   {provider:users[0], title:'DoughBros Strength Cycle', cover:'https://picsum.photos/seed/prog4/640/360', price:'Free', weeks:6, level:'Advanced', kind:'coach'},
 ];
 
@@ -3041,6 +3388,7 @@ async function renderReels(){
         <div>
           <div class="rname feed-author-link" data-username="${handle}">@${handle}</div>
           <div class="rcap">${p.caption||''}</div>
+          ${normalizeWorkout(p.workout) ? `<button class="btn btn-primary reel-wod-btn" data-complete-post="${p.id}">Complete this workout</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -3062,6 +3410,9 @@ function wireReelInteractions(){
   });
   document.querySelectorAll('#reelFeed .feed-author-link').forEach(elx=>{
     elx.addEventListener('click', (e)=>{ e.stopPropagation(); const u = elx.dataset.username; if(u) navigateToProfile(u); });
+  });
+  document.querySelectorAll('#reelFeed [data-complete-post]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); saveAndOpenWorkout(btn.dataset.completePost); });
   });
 }
 
@@ -3316,12 +3667,33 @@ if(coverFileInputEl) coverFileInputEl.addEventListener('change', async (e)=>{
   }catch(err){ console.error('[coverFileInput]', err); showToast('Could not upload cover', true); }
 });
 
-function renderPrograms(filter='all'){
+function mapProgramCard(p){
+  const levelRaw = String(p.level || p.kind || 'all levels').replace(/_/g,' ');
+  const level = levelRaw.charAt(0).toUpperCase() + levelRaw.slice(1);
+  const provider = p.provider || { name: p.author || 'Cadence', avatar: 'https://i.pravatar.cc/150?img=12', role: 'coach' };
+  return {
+    title: p.title,
+    cover: p.cover || p.cover_media || `https://picsum.photos/seed/${encodeURIComponent(p.slug || p.id || p.title)}/640/360`,
+    weeks: p.weeks || p.duration_weeks || 4,
+    level,
+    kind: p.kind || ((p.category === 'provider' || p.category === 'coach') ? p.category : 'coach'),
+    provider
+  };
+}
+async function renderPrograms(filter='all'){
   const el = document.getElementById('programsList');
-  const list = filter==='all'?programs:programs.filter(p=>p.kind===filter);
+  if(!el) return;
+  let source = [];
+  try{
+    const live = await db.getFreePrograms();
+    if(live && live.length) source = live.map(mapProgramCard);
+  }catch(err){ console.warn('[renderPrograms]', err); }
+  if(!source.length) source = programs.map(mapProgramCard);
+  let list = filter==='all' ? source : source.filter(p=>p.kind===filter);
+  if(!list.length) list = source;
   el.innerHTML = list.map(p=>`
     <div class="program-card">
-      <div class="program-cover"><img src="${p.cover}" alt="${p.title} cover" loading="lazy"><div class="program-price">${p.price}</div></div>
+      <div class="program-cover"><img src="${p.cover}" alt="${p.title} cover" loading="lazy"><div class="program-price free">Free</div></div>
       <div class="program-body">
         <div class="provider"><img src="${p.provider.avatar}" alt=""><span>${p.provider.name}</span>${badgeHtml(p.provider.role)}</div>
         <div class="program-title">${p.title}</div>
@@ -3329,7 +3701,7 @@ function renderPrograms(filter='all'){
           <span><svg data-lucide="calendar"></svg>${p.weeks} weeks</span>
           <span><svg data-lucide="signal"></svg>${p.level}</span>
         </div>
-        <button class="btn btn-primary btn-block">View program</button>
+        <button class="btn btn-primary btn-block">Open program</button>
       </div>
     </div>`).join('');
   lucide.createIcons();
@@ -3363,12 +3735,17 @@ function setView(name, opts){
       if(window.location.hash !== '#reels') history.pushState(null, '', '#reels');
     } else if(name === 'free'){
       if(window.location.hash !== '#free') history.pushState(null, '', '#free');
+    } else if(name === 'workouts'){
+      if(window.location.hash !== '#workouts') history.pushState(null, '', '#workouts');
     } else if(window.location.hash){
       history.replaceState(null, '', window.location.pathname);
     }
   }
+  if(name === 'feed') loadAndRenderFeed();
   if(name === 'reels') renderReels();
   if(name === 'whiteboard') renderWhiteboard();
+  if(name === 'workouts') renderMyWorkouts();
+  if(name === 'programs') renderPrograms();
   if(name === 'free') initMacroCalculator();
   if(name === 'profile' && !opts.fromHash) loadProfileByUsername(opts.username || null);
   window.scrollTo({top:0,behavior:'smooth'});
@@ -3393,6 +3770,8 @@ function handleHashRoute(){
     setView('reels', { skipHash: true });
   } else if(route === 'free'){
     setView('free', { skipHash: true });
+  } else if(route === 'workouts'){
+    setView('workouts', { skipHash: true });
   }
 }
 window.addEventListener('hashchange', handleHashRoute);
@@ -3450,9 +3829,23 @@ const closeCreateEl = document.getElementById('closeCreate');
 const programSwitchEl = document.getElementById('programSwitch');
 const openTagFromCreateEl = document.getElementById('openTagFromCreate');
 const submitPostEl = document.getElementById('submitPost');
-if(openCreateBtnEl) openCreateBtnEl.addEventListener('click',()=>createOverlay.classList.add('active'));
-if(mobileCreateBtnEl) mobileCreateBtnEl.addEventListener('click',()=>createOverlay.classList.add('active'));
+function openCreateModal(){
+  if(!document.querySelector('#wodMoveList .wod-move')) resetWodBuilder();
+  createOverlay.classList.add('active');
+  lucide.createIcons();
+}
+if(openCreateBtnEl) openCreateBtnEl.addEventListener('click', openCreateModal);
+if(mobileCreateBtnEl) mobileCreateBtnEl.addEventListener('click', openCreateModal);
 if(closeCreateEl) closeCreateEl.addEventListener('click',()=>createOverlay.classList.remove('active'));
+const addWodMoveBtnEl = document.getElementById('addWodMoveBtn');
+if(addWodMoveBtnEl) addWodMoveBtnEl.addEventListener('click', ()=>addWodMoveRow());
+const closeCompleteWodEl = document.getElementById('closeCompleteWod');
+if(closeCompleteWodEl) closeCompleteWodEl.addEventListener('click', ()=>document.getElementById('completeWodOverlay').classList.remove('active'));
+const completeWodSaveBtnEl = document.getElementById('completeWodSaveBtn');
+if(completeWodSaveBtnEl) completeWodSaveBtnEl.addEventListener('click', ()=>finishUserWorkout(false));
+const completeWodShareBtnEl = document.getElementById('completeWodShareBtn');
+if(completeWodShareBtnEl) completeWodShareBtnEl.addEventListener('click', ()=>finishUserWorkout(true));
+resetWodBuilder();
 // NOTE: fileInput 'change' listener is wired earlier (feature 6 upload block) via setStagedFile()
 if(programSwitchEl) programSwitchEl.addEventListener('click',function(){
   const on = this.classList.toggle('on');
