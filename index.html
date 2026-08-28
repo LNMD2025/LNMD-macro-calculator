@@ -6,6 +6,7 @@
 <title>Cadence</title>
 <meta name="description" content="Cadence — social fitness, programming, and free nutrition tools.">
 <meta name="theme-color" content="#d94f1e">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cadence">
@@ -1592,6 +1593,7 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
       </div>
       <button type="submit" class="btn btn-primary btn-block" id="authSubmitBtn">Sign In</button>
     </form>
+    <button type="button" class="btn btn-ghost btn-block" id="guestFreeBtn" style="margin-top:10px">Continue with Free Tools</button>
   </div>
 </div>
 
@@ -2207,6 +2209,12 @@ document.getElementById('signOutBtn').addEventListener('click', async ()=>{
 
 function showAuthGate(){ authGate.classList.remove('hidden'); }
 function hideAuthGate(){ authGate.classList.add('hidden'); }
+function openFreeToolsGuest(){
+  hideAuthGate();
+  setView('free');
+}
+const guestFreeBtn = document.getElementById('guestFreeBtn');
+if(guestFreeBtn) guestFreeBtn.addEventListener('click', openFreeToolsGuest);
 
 /* ---------------- FEED RENDER (live) ---------------- */
 function timeAgoForPost(p){ return timeAgo(p.created_at); }
@@ -2744,7 +2752,12 @@ async function initApp(){
   try{
     const user = await safeStep('initApp.currentUser', ()=>db.currentUser());
     if(!user){
-      showAuthGate();
+      if(location.hash.replace(/^#/,'') === 'free'){
+        hideAuthGate();
+        setView('free', { skipHash: true });
+      } else {
+        showAuthGate();
+      }
     } else {
       await bootAfterAuth();
     }
