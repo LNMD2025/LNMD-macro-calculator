@@ -8,7 +8,7 @@ Social fitness, coach programming, and free nutrition tools. This repository is 
 - Repost no longer crashes on a removed `renderFeed()` helper.
 - The app is a real PWA: manifest, icons, service worker, install prompt, Add to Home Screen on iOS.
 - Mobile shell uses safe-area insets, 16px inputs (no iOS zoom), and a bottom tab bar that clears the home indicator.
-- Free Tools includes the Katch-McArdle macro calculator with a timeline and optional save to `macro_profiles`.
+- Macro Calculator includes Katch-McArdle targets for training days and rest days, meals per day, per-session two-a-day details, and optional save to `macro_profiles`.
 - Supabase public tables now have RLS. Catalog data stays readable. Nutrition and personal logs are owner-only.
 - `handle_new_user()` can no longer be called as a public RPC.
 

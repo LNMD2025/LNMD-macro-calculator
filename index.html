@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cadence</title>
-<meta name="description" content="Cadence — social fitness, programming, and free nutrition tools.">
+<meta name="description" content="Cadence — social fitness, programming, and a macro calculator built for training and rest days.">
 <meta name="theme-color" content="#d94f1e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -62,7 +62,8 @@ a{color:inherit;text-decoration:none}
 h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;line-height:1.1}
 
 /* ===== APP SHELL ===== */
-#app{max-width:1180px;margin-inline:auto;display:grid;grid-template-columns:76px 1fr;min-height:100dvh}
+#app{max-width:1180px;margin-inline:auto;display:grid;grid-template-columns:1fr;min-height:100dvh;width:100%;overflow-x:hidden}
+@media(min-width:640px){#app{grid-template-columns:76px 1fr}}
 @media(min-width:900px){#app{grid-template-columns:240px 1fr 320px}}
 
 /* Sidebar nav (desktop) */
@@ -570,10 +571,26 @@ main.feed-col{min-width:0;padding-bottom:70px}
 
 
 /* ===== PWA / MOBILE HARDENING ===== */
-html{padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
-.mobile-topbar{padding-top:calc(12px + env(safe-area-inset-top))}
+html{padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left);overflow-x:hidden}
+body{overflow-x:hidden}
+.mobile-topbar{padding-top:calc(10px + env(safe-area-inset-top));padding-left:16px;padding-right:16px}
 .bottom-tabbar{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
 #mobileMoreFab{bottom:calc(78px + env(safe-area-inset-bottom))}
+@media(max-width:639px){
+  main.feed-col{padding-bottom:calc(84px + env(safe-area-inset-bottom));width:100%;min-width:0}
+  .view-header{flex-wrap:wrap;gap:10px}
+  .view-header .segmented{max-width:100%;overflow-x:auto}
+  .macro-totals{grid-template-columns:repeat(2,1fr)}
+  .wod-row{flex-direction:column}
+  .wod-sets{max-width:none}
+  .overlay{align-items:flex-end;padding:0}
+  .overlay .modal{max-width:100%;width:100%;max-height:92dvh;border-radius:var(--radius-xl) var(--radius-xl) 0 0}
+  .auth-gate{padding:16px;align-items:flex-end}
+  .auth-card{max-height:min(92dvh,720px);overflow-y:auto;margin-bottom:env(safe-area-inset-bottom)}
+  .install-banner{flex-wrap:wrap}
+  .post-media{aspect-ratio:4/5;max-height:70dvh}
+  .train-row,.session-card{flex-wrap:wrap}
+}
 @media(min-width:640px){#mobileMoreFab{display:none !important}}
 input,select,textarea{font-size:16px}
 .install-banner{display:none;align-items:center;gap:12px;margin:12px 16px;padding:12px 14px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)}
@@ -642,6 +659,59 @@ input,select,textarea{font-size:16px}
 .uw-empty{padding:48px 24px;text-align:center;color:var(--color-text-muted)}
 .program-price.free{background:var(--color-success-highlight);color:var(--color-success)}
 
+/* ===== MACRO SESSION CARDS / DAY SPLIT ===== */
+.session-hint{font-size:.82rem;color:var(--color-text-muted);background:var(--color-primary-highlight);border-radius:var(--radius-md);padding:10px 12px;margin:0 0 14px;line-height:1.45}
+.session-card{border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px;background:var(--color-surface)}
+.session-card-head{font-weight:800;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;color:var(--color-primary)}
+.macro-day-split{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:16px}
+@media(min-width:520px){.macro-day-split{grid-template-columns:1fr 1fr}}
+.macro-day-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px}
+.macro-day-card h4{font-size:.88rem;margin-bottom:8px}
+.macro-day-card .macro-totals{grid-template-columns:repeat(2,1fr);margin-bottom:8px}
+.macro-day-card .macro-totals b{font-size:1rem}
+.macro-week-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-muted);margin-bottom:8px}
+.macro-form textarea,.session-card input[type="text"]{width:100%;padding:12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);font-weight:500;color:var(--color-text)}
+.field-row{display:flex;gap:8px;align-items:flex-end}
+.field-row .field{flex:1;margin-bottom:0}
+.music-presets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.music-preset{padding:6px 10px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface-offset);font-size:.75rem;font-weight:700}
+.music-preset.active{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.music-help{font-size:.75rem;color:var(--color-text-muted);margin:-4px 0 10px;line-height:1.4}
+.post-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0}
+.post-chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:var(--color-text-muted);background:var(--color-surface-offset);border:1px solid var(--color-border);padding:4px 8px;border-radius:var(--radius-full);max-width:100%}
+.post-chip.music{color:var(--color-primary)}
+.post-chip svg{width:12px;height:12px;flex-shrink:0}
+.post-caption,.post-head .who .line1,.post-head .who .loc{overflow-wrap:anywhere;word-break:break-word}
+.mobile-more-fab{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(78px + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;background:var(--color-surface);border:1px solid var(--color-border);box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;z-index:29}
+@media(min-width:640px){.mobile-more-fab{display:none}}
+
+/* Final phone overrides — must stay last so they beat earlier duplicates */
+@media(max-width:639px){
+  #app{grid-template-columns:1fr;width:100%;max-width:100%}
+  main.feed-col,.view,.post,.free-wrap{min-width:0;max-width:100%}
+  main.feed-col{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .view-header{flex-wrap:wrap;gap:10px;position:sticky;top:0}
+  .view-header h2{font-size:1.2rem}
+  .profile-head{flex-wrap:wrap;gap:14px}
+  .profile-head .avatar-ring img{width:72px;height:72px}
+  .profile-stats{gap:18px;flex-wrap:wrap}
+  .macro-totals{grid-template-columns:repeat(2,1fr)}
+  .macro-totals b{font-size:1.05rem}
+  .block-row{grid-template-columns:1fr 1fr;gap:6px}
+  .overlay{align-items:flex-end;padding:0}
+  .overlay .modal{max-width:100%;width:100%;max-height:92dvh;border-radius:var(--radius-xl) var(--radius-xl) 0 0}
+  .auth-gate{padding:12px;align-items:flex-end}
+  .auth-card{max-height:min(92dvh,760px);overflow-y:auto;margin-bottom:env(safe-area-inset-bottom)}
+  .more-drawer{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+  .messages-layout{height:calc(100dvh - 56px - env(safe-area-inset-bottom))}
+  .reel-item{height:100dvh}
+  .reel-overlay-side{bottom:calc(110px + env(safe-area-inset-bottom))}
+  .reel-author-info{bottom:calc(72px + env(safe-area-inset-bottom))}
+  .prog-calendar{overflow-x:auto}
+  .post-media{aspect-ratio:1/1;max-height:70dvh}
+  .cd-toast{bottom:calc(92px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px)}
+}
+
 </style>
 </head>
 <body>
@@ -656,7 +726,7 @@ input,select,textarea{font-size:16px}
     <button class="nav-item" data-view="explore"><svg data-lucide="search"></svg><span>Explore</span></button>
     <button class="nav-item" data-view="programs"><svg data-lucide="dumbbell"></svg><span>Programs</span></button>
     <button class="nav-item" data-view="workouts"><svg data-lucide="list-checks"></svg><span>My Workouts</span></button>
-    <button class="nav-item" data-view="free"><svg data-lucide="calculator"></svg><span>Free Tools</span></button>
+    <button class="nav-item" data-view="free"><svg data-lucide="calculator"></svg><span>Macro Calculator</span></button>
     <button class="nav-item" data-view="messages"><svg data-lucide="send"></svg><span>Messages</span></button>
     <button class="nav-item" id="sidebarProgrammingBtn" data-view="builder" style="display:none"><svg data-lucide="calendar-cog"></svg><span>Programming</span></button>
     <button class="nav-item" id="openCreateBtn"><svg data-lucide="square-plus"></svg><span>Create</span></button>
@@ -700,11 +770,11 @@ input,select,textarea{font-size:16px}
     </section>
 
 
-    <!-- FREE TOOLS / MACRO CALCULATOR -->
+    <!-- MACRO CALCULATOR -->
     <section class="view" id="view-free">
-      <div class="view-header"><h2>Free Tools</h2></div>
+      <div class="view-header"><h2>Macro Calculator</h2></div>
       <div class="free-wrap">
-        <p class="free-lead">Science-backed daily macros. Runs on your phone, works offline after install.</p>
+        <p class="free-lead">Training-day and rest-day macros from what you actually do — including two-a-days. Save the result to your profile when you are signed in.</p>
         <form id="macroForm" class="macro-form" novalidate>
           <div class="macro-grid">
             <label>Wake time
@@ -722,7 +792,31 @@ input,select,textarea{font-size:16px}
             <label>Daily steps
               <input id="steps" type="number" inputmode="numeric" min="1000" max="40000" step="100" value="8000" required>
             </label>
-            <label>Sessions / day
+            <label>Meals per day
+              <select id="mealsPerDay">
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </label>
+            <label>Training days / week
+              <select id="trainingDays">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+              </select>
+            </label>
+            <label>Rest days / week
+              <input id="restDays" type="text" value="3" readonly>
+            </label>
+            <label id="sessionsPerDayLabel">Sessions per training day
               <select id="sessionsPerDay">
                 <option value="1">1</option>
                 <option value="2">2</option>
@@ -730,12 +824,8 @@ input,select,textarea{font-size:16px}
               </select>
             </label>
           </div>
-          <div id="sessionTimes" class="macro-grid"></div>
-          <fieldset class="macro-train">
-            <legend>Weekly training</legend>
-            <div id="trainingTypes"></div>
-            <button type="button" class="btn btn-ghost" id="addTrainingBtn">+ Add training type</button>
-          </fieldset>
+          <p class="session-hint" id="sessionHint" hidden>Two sessions are not the same day. A 2-hour morning run plus 30 minutes of evening yoga is a different load to two runs, or a run plus Hyrox. Describe each session.</p>
+          <div id="sessionCards"></div>
           <div class="macro-grid">
             <label>Goal
               <select id="macroGoal">
@@ -766,15 +856,40 @@ input,select,textarea{font-size:16px}
           <button type="submit" class="btn btn-primary btn-block" id="macroSubmit">Calculate</button>
         </form>
         <div id="macroResults" class="macro-results" hidden>
+          <p class="macro-week-label">Weekly average</p>
           <div class="macro-totals">
             <div><b id="outKcal"></b><span>kcal</span></div>
             <div><b id="outP"></b><span>protein</span></div>
             <div><b id="outC"></b><span>carbs</span></div>
             <div><b id="outF"></b><span>fat</span></div>
           </div>
+          <div class="macro-day-split">
+            <div class="macro-day-card">
+              <h4>Training day</h4>
+              <div class="macro-totals">
+                <div><b id="trainKcal"></b><span>kcal</span></div>
+                <div><b id="trainP"></b><span>protein</span></div>
+                <div><b id="trainC"></b><span>carbs</span></div>
+                <div><b id="trainF"></b><span>fat</span></div>
+              </div>
+              <p id="trainDayNote" style="font-size:.8rem;color:var(--color-text-muted)"></p>
+            </div>
+            <div class="macro-day-card">
+              <h4>Rest day</h4>
+              <div class="macro-totals">
+                <div><b id="restKcal"></b><span>kcal</span></div>
+                <div><b id="restP"></b><span>protein</span></div>
+                <div><b id="restC"></b><span>carbs</span></div>
+                <div><b id="restF"></b><span>fat</span></div>
+              </div>
+              <p style="font-size:.8rem;color:var(--color-text-muted)">Steps only — no session calories.</p>
+            </div>
+          </div>
           <details class="macro-breakdown"><summary>How this was calculated</summary><div id="macroBreakdown"></div></details>
-          <h3>Daily timeline</h3>
+          <h3>Training day timeline</h3>
           <ul id="macroTimeline" class="macro-timeline"></ul>
+          <h3>Rest day meals</h3>
+          <ul id="macroRestTimeline" class="macro-timeline"></ul>
           <button type="button" class="btn btn-ghost btn-block" id="saveMacroBtn">Save to my Cadence profile</button>
         </div>
       </div>
@@ -1590,6 +1705,8 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
     <div id="suggestionsList"></div>
   </aside>
 
+</div>
+
   <!-- ============ BOTTOM TAB BAR (mobile) ============ -->
   <nav class="bottom-tabbar" aria-label="Primary mobile">
     <button data-view="feed" aria-label="Home"><svg data-lucide="home"></svg></button>
@@ -1600,9 +1717,7 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
   </nav>
 
   <!-- ============ MOBILE "MORE" FLOATING BUTTON ============ -->
-  <button id="mobileMoreFab" aria-label="More" style="position:fixed;right:14px;bottom:78px;width:46px;height:46px;border-radius:50%;background:var(--color-surface);border:1px solid var(--color-border);box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;z-index:29"><svg data-lucide="ellipsis" style="width:22px;height:22px"></svg></button>
-
-</div>
+  <button id="mobileMoreFab" class="mobile-more-fab" aria-label="More"><svg data-lucide="ellipsis" style="width:22px;height:22px"></svg></button>
 
 <!-- ============ AUTH GATE ============ -->
 <!-- auth-modal / authModal: full-screen auth gate shown when there is no active Supabase session -->
@@ -1632,7 +1747,7 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
       </div>
       <button type="submit" class="btn btn-primary btn-block" id="authSubmitBtn">Sign In</button>
     </form>
-    <button type="button" class="btn btn-ghost btn-block" id="guestFreeBtn" style="margin-top:10px">Continue with Free Tools</button>
+    <button type="button" class="btn btn-ghost btn-block" id="guestFreeBtn" style="margin-top:10px">Continue with Macro Calculator</button>
   </div>
 </div>
 
@@ -1676,7 +1791,7 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
     <button class="more-drawer-item" data-view="explore"><svg data-lucide="search"></svg>Explore</button>
     <button class="more-drawer-item" data-view="programs"><svg data-lucide="dumbbell"></svg>Programs</button>
     <button class="more-drawer-item" data-view="workouts"><svg data-lucide="list-checks"></svg>My Workouts</button>
-    <button class="more-drawer-item" data-view="free"><svg data-lucide="calculator"></svg>Free Tools</button>
+    <button class="more-drawer-item" data-view="free"><svg data-lucide="calculator"></svg>Macro Calculator</button>
     <button class="more-drawer-item" id="moreDrawerProgrammingBtn" data-view="builder" style="display:none"><svg data-lucide="calendar-cog"></svg>Programming Studio</button>
     <button class="more-drawer-item" id="moreDrawerNotifBtn"><svg data-lucide="bell"></svg>Notifications</button>
     <button class="more-drawer-item" id="moreDrawerSettingsBtn"><svg data-lucide="settings"></svg>Settings</button>
@@ -1733,6 +1848,46 @@ a,button,[role=button],input,select,textarea{transition:color var(--transition-i
         <div style="font-size:.76rem;color:var(--color-text-muted);margin-top:4px" id="uploadProgressLabel">Uploading…</div>
       </div>
       <div class="field"><label for="captionInput">Caption</label><textarea id="captionInput" placeholder="Share what you're working on today..."></textarea></div>
+      <div class="field">
+        <label for="postLocation">Location</label>
+        <div class="field-row">
+          <input id="postLocation" type="text" list="locationSuggestions" placeholder="Gym, park, city…" maxlength="80" autocomplete="off">
+          <button type="button" class="btn btn-ghost" id="useMyLocationBtn" style="flex-shrink:0;padding:10px 12px" aria-label="Use my location"><svg data-lucide="map-pin" style="width:16px;height:16px"></svg></button>
+        </div>
+        <datalist id="locationSuggestions">
+          <option value="Home gym"></option>
+          <option value="Local park"></option>
+          <option value="Bondi Beach"></option>
+          <option value="Coogee Beach"></option>
+          <option value="Centennial Park"></option>
+          <option value="Sydney CBD"></option>
+          <option value="Melbourne CBD"></option>
+          <option value="Brisbane River"></option>
+          <option value="F45"></option>
+          <option value="CrossFit"></option>
+          <option value="Hyrox"></option>
+        </datalist>
+      </div>
+      <div class="field">
+        <label>Music sticker</label>
+        <p class="music-help">Adds the song name to your post, like Instagram. Cadence does not stream licensed audio — just the title and artist.</p>
+        <div class="music-presets" id="musicPresets">
+          <button type="button" class="music-preset" data-title="Eye of the Tiger" data-artist="Survivor">Eye of the Tiger</button>
+          <button type="button" class="music-preset" data-title="Lose Yourself" data-artist="Eminem">Lose Yourself</button>
+          <button type="button" class="music-preset" data-title="Till I Collapse" data-artist="Eminem">Till I Collapse</button>
+          <button type="button" class="music-preset" data-title="Stronger" data-artist="Kanye West">Stronger</button>
+          <button type="button" class="music-preset" data-title="Can't Hold Us" data-artist="Macklemore">Can't Hold Us</button>
+          <button type="button" class="music-preset" data-title="Thunderstruck" data-artist="AC/DC">Thunderstruck</button>
+        </div>
+        <div class="macro-grid">
+          <label style="text-transform:none;letter-spacing:0">Title
+            <input id="musicTitle" type="text" maxlength="80" placeholder="Song title">
+          </label>
+          <label style="text-transform:none;letter-spacing:0">Artist
+            <input id="musicArtist" type="text" maxlength="80" placeholder="Artist">
+          </label>
+        </div>
+      </div>
       <div class="toggle-row" style="border-top:1px solid var(--color-divider)">
         <div><strong style="font-size:.88rem">Tag people</strong><div style="font-size:.78rem;color:var(--color-text-muted)" id="tagSummary">No one tagged yet</div></div>
         <button class="btn btn-ghost" id="openTagFromCreate" style="font-size:.78rem;padding:8px 14px"><svg data-lucide="user-plus" style="width:14px;height:14px"></svg></button>
@@ -1969,7 +2124,7 @@ const db = {
     return data || [];
   },
 
-  async createPost({ kind, mediaUrl, mediaType, caption, expiresAt, workout, taggedUserIds }){
+  async createPost({ kind, mediaUrl, mediaType, caption, expiresAt, workout, taggedUserIds, location, music }){
     if(!state.user) throw new Error('Not signed in');
     const row = {
       user_id: state.user.id,
@@ -1980,6 +2135,8 @@ const db = {
       expires_at: expiresAt || null,
       workout: workout || null,
       tagged_user_ids: taggedUserIds || [],
+      location: location || null,
+      music: music || null,
     };
     const { data, error } = await sb.from('posts').insert(row).select('*, profiles!inner(username, display_name, avatar_url)').single();
     if(error) throw error;
@@ -2409,6 +2566,16 @@ function workoutCardHtml(raw, extraClass){
     <ol>${w.movements.map(m=>`<li>${escapeHtml(m)}</li>`).join('')}</ol>
   </div>`;
 }
+function postMetaChipsHtml(p){
+  const chips = [];
+  const music = p.music && typeof p.music === 'object' ? p.music : null;
+  if(music && (music.title || music.artist)){
+    const label = [music.title, music.artist].filter(Boolean).join(' · ');
+    chips.push(`<span class="post-chip music"><svg data-lucide="music"></svg>${escapeHtml(label)}</span>`);
+  }
+  if(!chips.length) return '';
+  return `<div class="post-chips">${chips.join('')}</div>`;
+}
 function taggedLineHtml(p){
   const tags = p.tagged_profiles || [];
   if(!tags.length) return '';
@@ -2616,7 +2783,7 @@ async function renderLiveFeed(){
         <img src="${avatar}" alt="${name}" loading="lazy" class="feed-author-link" data-username="${handle}">
         <div class="who">
           <div class="line1 feed-author-link" data-username="${handle}">${name}</div>
-          <div class="loc feed-author-link" data-username="${handle}">@${handle}</div>
+          <div class="loc ${p.location ? '' : 'feed-author-link'}" ${p.location ? '' : `data-username="${handle}"`}>${p.location ? escapeHtml(p.location) : '@'+handle}</div>
         </div>
         <svg data-lucide="more-horizontal" style="width:20px;height:20px"></svg>
       </div>
@@ -2637,6 +2804,7 @@ async function renderLiveFeed(){
       </div>
       <div class="post-likes" id="likeCount-${p.id}">${like.count.toLocaleString()} likes</div>
       ${p.caption ? `<div class="post-caption"><span class="cap-name">${handle}</span>${p.caption}</div>` : ''}
+      ${postMetaChipsHtml(p)}
       ${taggedLineHtml(p)}
       <div class="post-time">${timeAgoForPost(p)}</div>
     </article>`;
@@ -2966,6 +3134,53 @@ function setStagedFile(file){
   if(removeBtn) removeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); setStagedFile(null); if(fileInputEl) fileInputEl.value=''; });
 }
 
+function resetCreateExtras(){
+  const loc = document.getElementById('postLocation');
+  const title = document.getElementById('musicTitle');
+  const artist = document.getElementById('musicArtist');
+  if(loc) loc.value = '';
+  if(title) title.value = '';
+  if(artist) artist.value = '';
+  document.querySelectorAll('.music-preset').forEach(b=>b.classList.remove('active'));
+}
+function readCreateMusic(){
+  const title = (document.getElementById('musicTitle')?.value || '').trim();
+  const artist = (document.getElementById('musicArtist')?.value || '').trim();
+  return (title || artist) ? { title, artist } : null;
+}
+const musicPresetsEl = document.getElementById('musicPresets');
+if(musicPresetsEl) musicPresetsEl.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.music-preset');
+  if(!btn) return;
+  document.querySelectorAll('.music-preset').forEach(b=>b.classList.toggle('active', b===btn));
+  const title = document.getElementById('musicTitle');
+  const artist = document.getElementById('musicArtist');
+  if(title) title.value = btn.dataset.title || '';
+  if(artist) artist.value = btn.dataset.artist || '';
+});
+const useMyLocationBtn = document.getElementById('useMyLocationBtn');
+if(useMyLocationBtn) useMyLocationBtn.addEventListener('click', ()=>{
+  const input = document.getElementById('postLocation');
+  if(!navigator.geolocation){ showToast('Location is not available on this device', true); return; }
+  useMyLocationBtn.disabled = true;
+  showToast('Finding your location…');
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const { latitude, longitude } = pos.coords;
+    try{
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+      const data = await res.json();
+      const label = [data.locality || data.city, data.principalSubdivision].filter(Boolean).join(', ');
+      if(input) input.value = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    }catch(_){
+      if(input) input.value = `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    }
+    useMyLocationBtn.disabled = false;
+  }, ()=>{
+    useMyLocationBtn.disabled = false;
+    showToast('Could not get your location', true);
+  }, { enableHighAccuracy:false, timeout:8000, maximumAge:60000 });
+});
+
 const fileInputEl = document.getElementById('fileInput');
 if(fileInputEl) fileInputEl.addEventListener('change', e=>{
   const f = e.target.files && e.target.files[0];
@@ -3016,6 +3231,10 @@ async function handleSubmitPost(){
       setUploadProgress(100);
     }
     const expiresAt = selectedPostKind === 'story' ? new Date(Date.now() + 24*60*60*1000).toISOString() : null;
+    const location = (document.getElementById('postLocation')?.value || '').trim();
+    const musicTitle = (document.getElementById('musicTitle')?.value || '').trim();
+    const musicArtist = (document.getElementById('musicArtist')?.value || '').trim();
+    const music = (musicTitle || musicArtist) ? { title: musicTitle, artist: musicArtist } : null;
     const newPost = await db.createPost({
       kind: selectedPostKind,
       mediaUrl,
@@ -3023,7 +3242,9 @@ async function handleSubmitPost(){
       caption,
       expiresAt,
       workout,
-      taggedUserIds: []
+      taggedUserIds: [],
+      location,
+      music
     });
     if(selectedPostKind === 'story'){
       await loadAndRenderStories();
@@ -3037,6 +3258,7 @@ async function handleSubmitPost(){
     }
     document.getElementById('createOverlay').classList.remove('active');
     if(captionEl) captionEl.value = '';
+    resetCreateExtras();
     setStagedFile(null);
     if(fileInputEl) fileInputEl.value = '';
     setUploadProgress(null);
@@ -3736,7 +3958,7 @@ function setView(name, opts){
     } else if(name === 'reels'){
       if(window.location.hash !== '#reels') history.pushState(null, '', '#reels');
     } else if(name === 'free'){
-      if(window.location.hash !== '#free') history.pushState(null, '', '#free');
+      if(window.location.hash !== '#macros' && window.location.hash !== '#free') history.pushState(null, '', '#macros');
     } else if(name === 'workouts'){
       if(window.location.hash !== '#workouts') history.pushState(null, '', '#workouts');
     } else if(window.location.hash){
@@ -3770,7 +3992,7 @@ function handleHashRoute(){
     loadProfileByUsername(param || null);
   } else if(route === 'reels'){
     setView('reels', { skipHash: true });
-  } else if(route === 'free'){
+  } else if(route === 'free' || route === 'macros'){
     setView('free', { skipHash: true });
   } else if(route === 'workouts'){
     setView('workouts', { skipHash: true });
@@ -4062,33 +4284,23 @@ document.addEventListener('click', async (e)=>{
   }
 });
 
-/* ---------------- FREE MACRO CALCULATOR ---------------- */
-const TRAIN_OPTS = [
-  [0,'Select type'],[3,'Yoga/Pilates'],[4.5,'Weights'],[7,'Cycling'],[8,'Swim'],[9,'Run'],[10,'HIIT/CrossFit']
+/* ---------------- MACRO CALCULATOR ---------------- */
+const SESSION_TYPES = [
+  {id:'', label:'What are you doing?', met:0},
+  {id:'yoga', label:'Yoga / Pilates', met:3},
+  {id:'walk', label:'Walk', met:3.5},
+  {id:'weights', label:'Weights / strength', met:5},
+  {id:'cycle-easy', label:'Easy cycle', met:6},
+  {id:'run-easy', label:'Easy / long run', met:7.5},
+  {id:'swim', label:'Swim', met:8},
+  {id:'hyrox', label:'Hyrox / hybrid', met:9},
+  {id:'hiit', label:'HIIT / CrossFit', met:10},
+  {id:'cycle-hard', label:'Hard cycle', met:10},
+  {id:'run-hard', label:'Hard / interval run', met:11},
+  {id:'other', label:'Other', met:6}
 ];
 function fillHours(sel){
   sel.innerHTML = '<option value="">Hour</option>' + Array.from({length:24},(_,i)=>`<option value="${i}">${String(i).padStart(2,'0')}:00</option>`).join('');
-}
-function addTrainRow(hours=''){
-  const wrap = document.getElementById('trainingTypes');
-  if(!wrap) return;
-  const row = document.createElement('div');
-  row.className = 'train-row';
-  row.innerHTML = `<select class="trainingType">${TRAIN_OPTS.map(([v,l])=>`<option value="${v}">${l}${v?` (MET ${v})`:''}</option>`).join('')}</select>
-    <input class="trainingHours" type="number" inputmode="decimal" min="0" max="40" step="0.5" placeholder="hrs/wk" value="${hours}">`;
-  wrap.appendChild(row);
-}
-function updateSessionTimes(){
-  const n = parseInt(document.getElementById('sessionsPerDay').value,10) || 1;
-  const box = document.getElementById('sessionTimes');
-  if(!box) return;
-  box.innerHTML = '';
-  for(let i=1;i<=n;i++){
-    const lab = document.createElement('label');
-    lab.innerHTML = `Session ${i} start<select id="sessionTime${i}"></select>`;
-    box.appendChild(lab);
-    fillHours(lab.querySelector('select'));
-  }
 }
 function formatHour(h){
   const hour = ((h%24)+24)%24;
@@ -4096,18 +4308,134 @@ function formatHour(h){
   const display = hour%12 || 12;
   return display + ampm;
 }
+function sessionTypeOptions(selected){
+  return SESSION_TYPES.map(t=>`<option value="${t.id}" ${t.id===selected?'selected':''}>${t.label}</option>`).join('');
+}
+function renderSessionCards(){
+  const box = document.getElementById('sessionCards');
+  const hint = document.getElementById('sessionHint');
+  const label = document.getElementById('sessionsPerDayLabel');
+  const trainingDays = parseInt(document.getElementById('trainingDays')?.value,10) || 0;
+  const n = parseInt(document.getElementById('sessionsPerDay')?.value,10) || 1;
+  if(!box) return;
+  if(hint) hint.hidden = n < 2 || trainingDays < 1;
+  if(label) label.style.display = trainingDays < 1 ? 'none' : '';
+  box.hidden = trainingDays < 1;
+  if(trainingDays < 1){ box.innerHTML = ''; return; }
+  const existing = [...box.querySelectorAll('.session-card')].map(card=>({
+    type: card.querySelector('.sessType')?.value || '',
+    mins: card.querySelector('.sessMins')?.value || '',
+    when: card.querySelector('.sessWhen')?.value || '',
+    note: card.querySelector('.sessNote')?.value || ''
+  }));
+  const defaults = [
+    {type:'run-easy', mins:'60', when:'7', note:'e.g. easy long run'},
+    {type:'yoga', mins:'30', when:'18', note:'e.g. evening yoga'},
+    {type:'weights', mins:'45', when:'12', note:'e.g. lunch strength'}
+  ];
+  box.innerHTML = '';
+  for(let i=1;i<=n;i++){
+    const prev = existing[i-1] || defaults[i-1] || defaults[0];
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    card.innerHTML = `<div class="session-card-head">Session ${i}${n>1 ? (i===1?' · first':' · later') : ''}</div>
+      <div class="macro-grid">
+        <label>What are you doing
+          <select class="sessType">${sessionTypeOptions(prev.type)}</select>
+        </label>
+        <label>Duration (min)
+          <input class="sessMins" type="number" inputmode="numeric" min="10" max="300" step="5" value="${prev.mins||60}">
+        </label>
+        <label>Time of day
+          <select class="sessWhen">
+            <option value="6" ${prev.when==='6'?'selected':''}>Early morning (6am)</option>
+            <option value="7" ${prev.when==='7'?'selected':''}>Morning (7am)</option>
+            <option value="9" ${prev.when==='9'?'selected':''}>Late morning (9am)</option>
+            <option value="12" ${prev.when==='12'?'selected':''}>Midday</option>
+            <option value="16" ${prev.when==='16'?'selected':''}>Afternoon (4pm)</option>
+            <option value="18" ${String(prev.when)==='18'?'selected':''}>Evening (6pm)</option>
+            <option value="20" ${prev.when==='20'?'selected':''}>Night (8pm)</option>
+          </select>
+        </label>
+        <label>Notes
+          <input class="sessNote" type="text" maxlength="80" placeholder="${prev.note||'What kind of session?'}" value="${existing[i-1] ? escapeHtml(prev.note) : ''}">
+        </label>
+      </div>`;
+    box.appendChild(card);
+  }
+}
+function syncRestDays(){
+  const td = parseInt(document.getElementById('trainingDays')?.value,10);
+  const rest = document.getElementById('restDays');
+  if(rest && Number.isFinite(td)) rest.value = String(7 - td);
+  renderSessionCards();
+}
+function macrosForCalories(calories, protein, fat){
+  const carbCal = calories - protein*4 - fat*9;
+  return { calories: Math.round(calories), protein, fat, carbs: Math.round(carbCal/4) };
+}
+function mealPlan(mealsPerDay, protein, carbs, fat, wakeTime, sleepTime, sessions){
+  const awake = sleepTime>wakeTime ? sleepTime-wakeTime : sleepTime-wakeTime+24;
+  const events = [];
+  (sessions||[]).forEach((s, idx)=>{
+    events.push({
+      hour: s.start,
+      kind: 'session',
+      label: `${formatHour(s.start)} · ${s.label}${s.note ? ' — '+s.note : ''}`,
+      detail: `${s.mins} min · ~${Math.round(s.kcal)} kcal`
+    });
+  });
+  const mealCount = Math.max(2, Math.min(6, mealsPerDay));
+  const slot = awake / (mealCount + 1);
+  let t = wakeTime;
+  for(let i=0;i<mealCount;i++){
+    t += slot;
+    let hour = Math.round(t)%24;
+    while(events.some(e=>e.kind==='session' && e.hour===hour)) { t += 0.5; hour = Math.round(t)%24; }
+    const near = (sessions||[]).find(s=>Math.abs(((hour-s.start+24)%24))<=2 || Math.abs(((s.start-hour+24)%24))<=1);
+    let tag = `Meal ${i+1}`;
+    if(near){
+      const after = ((hour - near.start + 24)%24) <= 2 && hour !== near.start;
+      tag = after ? `Post · ${near.short}` : `Pre · ${near.short}`;
+    }
+    events.push({ hour, kind:'meal', label:`${formatHour(hour)} · ${tag}`, protein:0, carbs:0, fats:0 });
+  }
+  const meals = events.filter(e=>e.kind==='meal');
+  meals.forEach((m,i)=>{
+    const boost = /Pre|Post/.test(m.label) ? 1.25 : 1;
+    m._w = boost;
+  });
+  const wSum = meals.reduce((s,m)=>s+m._w,0);
+  meals.forEach(m=>{
+    m.protein = Math.round(protein * m._w / wSum);
+    m.carbs = Math.round(carbs * m._w / wSum);
+    m.fats = Math.round(fat * m._w / wSum);
+  });
+  events.sort((a,b)=>a.hour-b.hour);
+  return events;
+}
+function renderMacroEvents(el, events){
+  if(!el) return;
+  el.innerHTML = events.map(e=>{
+    if(e.kind==='session') return `<li><strong>${escapeHtml(e.label)}</strong><div>${escapeHtml(e.detail)}</div></li>`;
+    return `<li><strong>${escapeHtml(e.label)}</strong><div>P ${e.protein}g · C ${e.carbs}g · F ${e.fats}g</div></li>`;
+  }).join('');
+}
 function initMacroCalculator(){
   const wake = document.getElementById('wakeTime');
   const sleep = document.getElementById('sleepTime');
-  if(!wake || wake.options.length>1) return;
-  fillHours(wake); fillHours(sleep);
-  wake.value = '6'; sleep.value = '22';
-  addTrainRow();
-  updateSessionTimes();
+  if(!wake) return;
+  if(wake.options.length<=1){
+    fillHours(wake); fillHours(sleep);
+    wake.value = '6'; sleep.value = '22';
+  }
+  if(window._macroReady) { syncRestDays(); return; }
+  window._macroReady = true;
+  syncRestDays();
+  const td = document.getElementById('trainingDays');
+  if(td) td.addEventListener('change', syncRestDays);
   const sess = document.getElementById('sessionsPerDay');
-  if(sess) sess.addEventListener('change', updateSessionTimes);
-  const addBtn = document.getElementById('addTrainingBtn');
-  if(addBtn) addBtn.addEventListener('click', ()=>addTrainRow());
+  if(sess) sess.addEventListener('change', renderSessionCards);
   const form = document.getElementById('macroForm');
   if(form) form.addEventListener('submit', (e)=>{ e.preventDefault(); runMacroCalc(); });
   const saveBtn = document.getElementById('saveMacroBtn');
@@ -4121,6 +4449,9 @@ function runMacroCalc(){
   const weight = parseFloat(document.getElementById('weight').value);
   const bodyFat = parseFloat(document.getElementById('bodyFat').value);
   const steps = parseFloat(document.getElementById('steps').value);
+  const mealsPerDay = parseInt(document.getElementById('mealsPerDay').value,10) || 3;
+  const trainingDays = parseInt(document.getElementById('trainingDays').value,10);
+  const restDays = 7 - trainingDays;
   const goal = document.getElementById('macroGoal').value;
   const proteinPerKg = parseFloat(document.getElementById('proteinLevel').value);
   const fatPerKg = parseFloat(document.getElementById('fatLevel').value);
@@ -4130,82 +4461,81 @@ function runMacroCalc(){
   if(!(weight>=30 && weight<=250)) problems.push('Weight must be 30–250 kg.');
   if(!(bodyFat>=3 && bodyFat<=60)) problems.push('Body fat must be 3–60%.');
   if(!(steps>=1000 && steps<=40000)) problems.push('Steps must be 1,000–40,000.');
-  const training = [];
-  document.querySelectorAll('#trainingTypes .train-row').forEach(row=>{
-    const met = parseFloat(row.querySelector('.trainingType').value)||0;
-    const hours = parseFloat(row.querySelector('.trainingHours').value)||0;
-    if(met>0 && hours>0) training.push({met,hours});
-  });
-  const totalHours = training.reduce((s,t)=>s+t.hours,0);
-  if(totalHours<1 || totalHours>40) problems.push('Add 1–40 weekly training hours.');
-  if(problems.length){ err.textContent = problems.join(' '); err.hidden=false; return; }
-  const sessionTimes = [];
-  for(let i=1;i<=sessionsPerDay;i++){
-    const v = parseInt(document.getElementById('sessionTime'+i).value,10);
-    sessionTimes.push(Number.isNaN(v) ? 8+(i-1)*4 : v);
+  if(!(trainingDays>=0 && trainingDays<=7)) problems.push('Pick training days per week.');
+  const sessions = [];
+  if(trainingDays>0){
+    document.querySelectorAll('#sessionCards .session-card').forEach((card, idx)=>{
+      const typeId = card.querySelector('.sessType')?.value || '';
+      const type = SESSION_TYPES.find(t=>t.id===typeId);
+      const mins = parseFloat(card.querySelector('.sessMins')?.value);
+      const start = parseInt(card.querySelector('.sessWhen')?.value,10);
+      const note = (card.querySelector('.sessNote')?.value || '').trim();
+      if(!type || !type.met) problems.push(`Choose what session ${idx+1} is.`);
+      if(!(mins>=10 && mins<=300)) problems.push(`Session ${idx+1} duration must be 10–300 minutes.`);
+      if(type && type.met && mins>=10){
+        const hours = mins/60;
+        const kcal = type.met * weight * hours;
+        sessions.push({
+          id: type.id, label: type.label, short: type.label.split('/')[0].trim(),
+          met: type.met, mins, hours, start: Number.isFinite(start)?start:7, note, kcal
+        });
+      }
+    });
+    if(sessionsPerDay>=2 && sessions.length<2) problems.push('Describe each session when you train twice a day.');
   }
+  if(problems.length){ err.textContent = problems.join(' '); err.hidden=false; return; }
   const lean = weight * (1 - bodyFat/100);
   const bmr = 370 + 21.6 * lean;
   const baseTdee = bmr * 1.2;
   const stepsCal = 3.5 * weight * (steps / 6000);
-  const exerciseCal = training.reduce((s,t)=>s + t.met * weight * (t.hours/7), 0);
-  const tdee = baseTdee + stepsCal + exerciseCal;
+  const trainExercise = sessions.reduce((s,t)=>s + t.kcal, 0);
+  const trainTdee = baseTdee + stepsCal + trainExercise;
+  const restTdee = baseTdee + stepsCal;
+  const weekTdee = trainingDays===0 ? restTdee : ((trainTdee * trainingDays) + (restTdee * restDays)) / 7;
   const adj = {aggressiveCut:0.7, moderateCut:0.85, recomp:0.95, aggressiveBulk:1.2, performance:1.1, maintain:1}[goal] || 1;
-  const calories = tdee * adj;
   const protein = Math.round(weight * proteinPerKg);
   const fat = Math.round(lean * fatPerKg);
-  const carbCal = calories - protein*4 - fat*9;
-  const carbs = Math.round(carbCal/4);
-  if(carbs < 0){
+  const avg = macrosForCalories(weekTdee * adj, protein, fat);
+  const train = macrosForCalories(trainTdee * adj, protein, fat);
+  const rest = macrosForCalories(restTdee * adj, protein, fat);
+  if(avg.carbs < 0 || train.carbs < 0 || rest.carbs < 0){
     err.textContent = 'Carbs went negative. Lower protein/fat or raise activity so calories can cover them.';
     err.hidden = false;
   }
-  document.getElementById('outKcal').textContent = Math.round(calories);
-  document.getElementById('outP').textContent = protein+'g';
-  document.getElementById('outC').textContent = carbs+'g';
-  document.getElementById('outF').textContent = fat+'g';
+  document.getElementById('outKcal').textContent = avg.calories;
+  document.getElementById('outP').textContent = avg.protein+'g';
+  document.getElementById('outC').textContent = avg.carbs+'g';
+  document.getElementById('outF').textContent = avg.fat+'g';
+  document.getElementById('trainKcal').textContent = train.calories;
+  document.getElementById('trainP').textContent = train.protein+'g';
+  document.getElementById('trainC').textContent = train.carbs+'g';
+  document.getElementById('trainF').textContent = train.fat+'g';
+  document.getElementById('restKcal').textContent = rest.calories;
+  document.getElementById('restP').textContent = rest.protein+'g';
+  document.getElementById('restC').textContent = rest.carbs+'g';
+  document.getElementById('restF').textContent = rest.fat+'g';
+  const sessionLine = sessions.length
+    ? sessions.map(s=>`${s.label}${s.note?' ('+s.note+')':''} ${s.mins}min`).join(' + ')
+    : 'no sessions';
+  document.getElementById('trainDayNote').textContent = trainingDays
+    ? `${trainingDays} train / ${restDays} rest · ${sessionLine}`
+    : 'No training days this week.';
   document.getElementById('macroBreakdown').innerHTML =
-    `Lean mass ${Math.round(lean)} kg · BMR ${Math.round(bmr)} · TDEE ${Math.round(tdee)} · Goal ${goal} (${Math.round((adj-1)*100)}%). Protein uses total weight; fat uses lean mass; carbs fill remaining calories.`;
-  let wCarb=0.5,wPro=0.5,wFat=0.3;
-  if(goal==='performance'||goal==='aggressiveBulk'){ wCarb=0.7; wPro=0.4; wFat=0.2; }
-  else if(goal==='aggressiveCut'||goal==='recomp'){ wCarb=0.4; wPro=0.6; wFat=0.4; }
-  const events = [];
-  sessionTimes.forEach((start, idx)=>{
-    const n = idx+1;
-    const specs = [
-      {hour:(start-1+24)%24, label:`${formatHour(start-1)} · Pre ${n}`, p:0.3,c:0.3,f:0.4},
-      {hour:start, label:`${formatHour(start)} · Intra ${n}`, p:0.2,c:0.3,f:0.2},
-      {hour:(start+1)%24, label:`${formatHour(start+1)} · Post ${n}`, p:0.5,c:0.4,f:0.4}
-    ];
-    specs.forEach(s=>events.push({
-      hour:s.hour, label:s.label,
-      protein: Math.round(protein * (wPro/sessionsPerDay) * s.p),
-      carbs: Math.round(carbs * (wCarb/sessionsPerDay) * s.c),
-      fats: Math.round(fat * (wFat/sessionsPerDay) * s.f)
-    }));
-  });
-  const otherP = Math.round(protein * (1-wPro) / 3);
-  const otherC = Math.round(carbs * (1-wCarb) / 3);
-  const otherF = Math.round(fat * (1-wFat) / 3);
-  const awake = sleepTime>wakeTime ? sleepTime-wakeTime : sleepTime-wakeTime+24;
-  let t = wakeTime;
-  for(let i=0;i<3;i++){
-    t += awake/4;
-    let hour = Math.floor(t)%24;
-    while(events.some(e=>e.hour===hour)) { t+=1; hour=Math.floor(t)%24; }
-    events.push({hour, label:`${formatHour(hour)} · Meal ${i+1}`, protein:otherP, carbs:otherC, fats:otherF});
-  }
-  events.sort((a,b)=>a.hour-b.hour);
-  document.getElementById('macroTimeline').innerHTML = events.map(e=>
-    `<li><strong>${e.label}</strong><div>P ${e.protein}g · C ${e.carbs}g · F ${e.fats}g</div></li>`
-  ).join('');
+    `Lean mass ${Math.round(lean)} kg · BMR ${Math.round(bmr)} (Katch-McArdle). Base living ${Math.round(baseTdee)} + steps ${Math.round(stepsCal)}. Training-day sessions add ${Math.round(trainExercise)} kcal because MET × kg × hours is different for a 2-hour easy run than for Hyrox or yoga. Weekly average blends ${trainingDays} training days and ${restDays} rest days. Protein uses total weight; fat uses lean mass; carbs fill remaining calories after the ${goal} target.`;
+  renderMacroEvents(document.getElementById('macroTimeline'), mealPlan(mealsPerDay, train.protein, train.carbs, train.fat, wakeTime, sleepTime, sessions));
+  renderMacroEvents(document.getElementById('macroRestTimeline'), mealPlan(mealsPerDay, rest.protein, rest.carbs, rest.fat, wakeTime, sleepTime, []));
   document.getElementById('macroResults').hidden = false;
   window._lastMacro = {
     label: `${goal} @ ${new Date().toISOString().slice(0,10)}`,
-    calories: Math.round(calories), protein_g: protein, carbs_g: carbs, fat_g: fat,
-    bodyweight_kg: weight, goal, diet: null, activity: totalHours+'h/wk',
-    bmr: Math.round(bmr), tdee: Math.round(tdee),
-    inputs: {wakeTime,sleepTime,bodyFat,steps,sessionsPerDay,sessionTimes,training,proteinPerKg,fatPerKg}
+    calories: avg.calories, protein_g: avg.protein, carbs_g: avg.carbs, fat_g: avg.fat,
+    bodyweight_kg: weight, goal, diet: null,
+    activity: `${trainingDays} train / ${restDays} rest · ${sessionLine}`,
+    bmr: Math.round(bmr), tdee: Math.round(weekTdee),
+    inputs: {
+      wakeTime, sleepTime, bodyFat, steps, mealsPerDay, trainingDays, restDays,
+      sessionsPerDay, sessions, proteinPerKg, fatPerKg,
+      train_day: train, rest_day: rest, weekly_avg: avg
+    }
   };
 }
 async function saveMacroProfile(){

@@ -1,4 +1,4 @@
-const CACHE = 'cadence-v4';
+const CACHE = 'cadence-v5';
 const PRECACHE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
